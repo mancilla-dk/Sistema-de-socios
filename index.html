@@ -26,8 +26,9 @@
     
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+        import { getDatabase, ref, set, get, child } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDm242DPFW_Kp7agCX7ysif0GamUpUDp1c",
@@ -41,16 +42,31 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
-        const db = getFirestore(app);
-        
+                const db = getDatabase(app);
+
+                if (window.location.protocol === 'file:') {
+            alert("⚠️ ALERTA DE SISTEMA: Estás abriendo esta plataforma como un archivo local. Por seguridad, Firebase BLOQUEARÁ la conexión a la nube. DEBES alojar esta página en un servidor web o Hosting (http/https) para que se guarde la información.");
+        }
+
         // Exponer funciones a global para usarlas desde el HTML
         window.fbAuth = auth;
         window.fbDb = db;
         window.signInWithEmailAndPassword = signInWithEmailAndPassword;
         window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+                window.fbRef = ref;
+        window.fbSet = set;
+        window.fbGet = get;
+        window.fbChild = child;
+                // Esperar a que la página esté lista y Firebase conectado para arrancar
+        window.addEventListener('load', () => {
+            if (typeof window.initApp === 'function') {
+                setTimeout(window.initApp, 500);
+            }
+        });
+
     </script>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800 overflow-x-hidden" onload="initApp()">
+<body class="bg-slate-50 font-sans text-slate-800 overflow-x-hidden">
 
         <div id="landingView" class="view-section min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 relative overflow-hidden">
 
@@ -726,12 +742,30 @@
             sales: [],
             commissions: []
         };
-                          function initApp() {
+                                         async function initApp() {
             try {
-                const saved = localStorage.getItem('ZT_DB_V2');
-                if (saved) {
-                    state = JSON.parse(saved);
+                let saved = localStorage.getItem('ZT_DB_V2');
+                if (saved && typeof saved === 'string') state = JSON.parse(saved);
+
+                               if (window.fbDb && window.fbGet && window.fbRef) {
+                    try {
+                        const dbRef = window.fbRef(window.fbDb);
+                        const snapshot = await window.fbGet(window.fbChild(dbRef, "sistema/estado_global"));
+                        if (snapshot.exists()) {
+                            state = snapshot.val();
+                            localStorage.setItem('ZT_DB_V2', JSON.stringify(state));
+                            saved = true;
+                        } else {
+                            await window.fbSet(window.fbRef(window.fbDb, "sistema/estado_global"), state);
+                        }
+                    } catch (e) { 
+                        alert("🛑 FIREBASE RECHAZA LA LECTURA:\n" + e.message + "\n\nVe a tu Realtime Database > Reglas y pon .read: true y .write: true");
+                    }
+                }
+
+                if (saved || state.currentUser) {
                     if(state.currentUser) {
+
                         const localUser = state.users.find(u => u.id === state.currentUser.id || u.email === state.currentUser.email);
                         if(localUser && localUser.activo === false) {
                             state.currentUser = null;
@@ -769,8 +803,16 @@
             }
         }                                          
 
-        function saveDb() {
+                        async function saveDb() {
             localStorage.setItem('ZT_DB_V2', JSON.stringify(state));
+                        if (window.fbDb && window.fbSet && window.fbRef) {
+                try {
+                    await window.fbSet(window.fbRef(window.fbDb, "sistema/estado_global"), state);
+                } catch (e) {
+                    alert("🛑 ERROR AL GUARDAR:\n" + e.message + "\n\nAsegúrate de que en las Reglas de Realtime Database diga \".write\": true");
+                }
+            }
+
         }
 
         // ================= UTILS & UI =================
@@ -2089,3 +2131,4 @@
     </script>
 </body>
 </html>
+
