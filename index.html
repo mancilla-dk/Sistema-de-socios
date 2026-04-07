@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS ZonaTecno - Sistema de Gestión</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+
+    <style>
+        
+               .view-section { display: none !important; }
+        .active-view { display: block !important; animation: fadeIn 0.3s ease-in-out; }
+              #landingView.active-view, #loadingView.active-view { display: flex !important; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        .modal-overlay { background-color: rgba(30, 58, 138, 0.85); backdrop-filter: blur(4px); }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, query, where, Timestamp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDm242DPFW_Kp7agCX7ysif0GamUpUDp1c",
+            authDomain: "socoos.firebaseapp.com",
+            databaseURL: "https://socoos-default-rtdb.firebaseio.com",
+            projectId: "socoos",
+            storageBucket: "socoos.firebasestorage.app",
+            messagingSenderId: "779738501346",
+            appId: "1:779738501346:web:1b6337a667d6b41b9a4ebb"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        // Exponer funciones a global para usarlas desde el HTML
+        window.fbAuth = auth;
+        window.fbDb = db;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+    </script>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 overflow-x-hidden" onload="initApp()">
+
+        <div id="landingView" class="view-section min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 relative overflow-hidden">
+
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')]"></div>
+        <div class="z-10 text-center px-4">
+                       <h1 class="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-emerald-400 mb-6 tracking-tighter mx-auto flex justify-center items-center w-full text-center">ZonaTecno</h1>
+
+            <p class="text-xl md:text-2xl text-blue-100 mb-10 font-light max-w-2xl mx-auto">Plataforma SaaS integral para la gestión de ventas, eventos y red de promotores inteligentes.</p>
+                                  <div class="bg-[#1e2330] p-8 rounded-[2rem] shadow-2xl w-full max-w-sm mx-auto border border-slate-700/50 mt-4">
+                <h2 class="text-[32px] font-extrabold text-white mb-2 text-center leading-tight">Acceso al<br>Panel</h2>
+                <p class="text-slate-400 text-center text-sm mb-6">Inicia sesión para gestionar<br>tus invitaciones.</p>
+                <div class="space-y-4 text-left">
+                    <div>
+                        <input type="email" id="emailInput" placeholder="Correo electrónico" class="w-full p-3 bg-transparent border border-slate-500/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400 transition">
+                    </div>
+                    <div>
+                        <input type="password" id="passInput" placeholder="........" class="w-full p-3 bg-transparent border border-slate-500/50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400 transition">
+                    </div>
+                    <button id="btnLogin" onclick="handleLogin()" class="w-full bg-[#4082f6] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg hover:bg-blue-600 transition mt-2 flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
+                        Ingresar
+                    </button>
+                </div>
+                <div class="mt-8 pt-4 text-center">
+                    <p class="text-slate-400 text-sm mb-3">¿No tienes cuenta? Contacta al<br>proveedor</p>
+                    <button onclick="solicitarPruebaWA()" class="w-full flex items-center justify-center gap-2 text-[#4082f6] font-bold hover:text-blue-400 transition text-sm">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.086 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        Inicio con tu Plan Básico
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+             <div id="loadingView" class="view-section active-view min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-900 via-blue-900 to-slate-900 relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wNSkiLz48L3N2Zz4=')]"></div>
+        <div class="z-10 flex flex-col items-center gap-5 text-center px-4 max-w-2xl mx-auto w-full">
+            <div class="relative flex justify-center items-center mb-2">
+                <div class="absolute w-20 h-20 border-4 border-white/10 rounded-full"></div>
+                <div class="w-20 h-20 rounded-full border-4 border-emerald-400 border-t-transparent animate-spin shadow-[0_0_15px_rgba(52,211,153,0.4)]"></div>
+                <svg class="w-8 h-8 text-white absolute animate-pulse" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            </div>
+            <div class="animate-pulse">
+                <h2 class="text-2xl md:text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-emerald-300 leading-tight tracking-tight">Bienvenido a Plataforma SaaS integral para la gestión de ventas, eventos y red de promotores inteligentes.<span id="loadRoleText" class="hidden"></span></h2>
+                <p class="text-blue-200 font-light text-lg mt-2">Gracias por ser parte de ZonaTecno, <span id="loadNameText" class="font-bold text-white"></span></p>
+            </div>
+            <div class="w-full max-w-sm mt-4 space-y-4 bg-white/5 p-6 rounded-2xl border border-white/10 backdrop-blur-md shadow-2xl">
+                <div class="h-2.5 bg-white/20 rounded-full w-3/4 mx-auto animate-pulse"></div>
+                <div class="h-2.5 bg-white/10 rounded-full w-1/2 mx-auto animate-pulse"></div>
+                <div class="h-2.5 bg-white/20 rounded-full w-5/6 mx-auto animate-pulse"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminView" class="view-section min-h-screen bg-slate-50">
+         
+               <nav class="bg-[#1a1b3a] text-white p-5 shadow-md sticky top-0 z-40 border-b border-slate-800">
+            <div class="max-w-7xl mx-auto flex flex-col gap-4">
+                                 <div class="text-center md:text-left mb-2">
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Mi Panel Profesional</h1>
+                    <p class="text-emerald-400 text-sm font-medium">Panel Administrador</p>
+                </div>
+
+                               <label class="block text-white text-sm font-bold mb-[-10px] uppercase">¿Qué deseas hacer?</label>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+                                       <select onchange="switchAdminTab(this.value)" class="flex-1 p-3 rounded-xl bg-[#1e2340] text-white border border-blue-900 font-semibold text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-inner appearance-none">
+
+                        <option value="ventas">Bandeja de Entrada</option>
+                        <option value="alta_cliente">Dar de alta un cliente</option>
+                        <option value="clientes">Gestión de Clientes</option>
+                        <option value="alta_socio">Dar de alta socio</option>
+                                          <option value="socios">Gestión de Socios</option>
+                        <option value="comisiones">Gestión de Comisiones</option>
+                        <option value="notificaciones">Publicar Notificaciones</option>
+
+                        <option value="demos">Publicar Demos</option>
+                        <option value="precios_config">Precios y Configuración (WhatsApp)</option>
+                         <option value="descargas">Descarga de Imágenes Subidas</option>
+                        <option value="publicidad">Herramientas de Publicidad</option>
+
+                    </select>                                               
+
+                    <button onclick="logout()" class="px-6 py-3 rounded-xl bg-[#e11d48] hover:bg-rose-700 text-white font-bold text-sm transition shadow-lg">Salir</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-4 md:p-6">
+            <div id="adminTabVentas" class="admin-tab block space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                        Bandeja de Aprobación de Ventas
+                    </h2>
+                    <div id="adminSalesContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </div>
+                </div>
+            </div>
+
+                                               <div id="adminTabClientes" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-bold text-emerald-700">Mis Clientes Directos</h2>
+                        <button onclick="mostrarModalNuevoCliente()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-bold shadow hover:bg-emerald-700">+ Alta Manual Cliente</button>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="min-w-full text-left text-sm text-slate-700">
+                            <thead class="bg-slate-100 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3 font-semibold">Cliente</th>
+                                    <th class="p-3 font-semibold">Producto / Plan</th>
+                                    <th class="p-3 font-semibold">Vencimiento / Estado</th>
+                                    <th class="p-3 font-semibold text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminClientsTableMisClientes" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6">
+                    <h2 class="text-xl font-bold text-blue-700 mb-4">Clientes de Socios</h2>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200">
+                        <table class="min-w-full text-left text-sm text-slate-700">
+                            <thead class="bg-slate-100 border-b border-slate-200">
+                                <tr>
+                                    <th class="p-3 font-semibold">Cliente</th>
+                                    <th class="p-3 font-semibold">Producto / Plan</th>
+                                    <th class="p-3 font-semibold">Vencimiento / Estado</th>
+                                    <th class="p-3 font-semibold">Socio</th>
+                                    <th class="p-3 font-semibold text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminClientsTableSocios" class="divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+                                               <div id="adminTabSocios" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Gestión de Socios y Comisiones</h2>
+                    <p class="text-slate-600 text-sm mb-4">Administrar socios (editar, eliminar, ver datos de sus clientes).</p>
+                    <ul id="listadoSocios" class="space-y-3 text-sm text-slate-600 overflow-y-auto"></ul>
+                </div>
+            </div>
+
+            <div id="adminTabComisiones" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-emerald-700 mb-4">Gestión Detallada de Comisiones</h2>
+                    <p class="text-slate-600 text-sm mb-6">Monitorea los ingresos totales generados, comisiones cobradas y saldos pendientes de cada socio.</p>
+                    <div id="listadoComisionesAdmin" class="space-y-4"></div>
+                </div>
+            </div>
+
+
+                       <div id="adminTabAltaSocio" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Dar de alta socio</h2>
+                    <form onsubmit="crearSocio(event)" class="space-y-4 max-w-lg">
+                        <input type="text" id="newSocioNombre" placeholder="Nombre Completo" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <div>
+                            <label class="block text-slate-500 text-xs font-bold mb-1 ml-1">Fecha de inicio</label>
+                            <input type="date" id="newSocioFecha" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-slate-600">
+                        </div>
+                        <input type="email" id="newSocioEmail" placeholder="Correo del Socio" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <input type="password" id="newSocioPass" placeholder="Contraseña Temporal" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <button type="submit" class="w-full bg-indigo-600 text-white font-bold p-3 rounded-xl hover:bg-indigo-700 transition shadow">Crear Cuenta Socio</button>
+                    </form>
+                </div>
+            </div>
+
+            <div id="adminTabPreciosConfig" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Configurar WhatsApp y Precios</h2>
+                    <label class="block text-slate-700 text-sm font-bold mb-1">WhatsApp de Admin (Pagos/Retiros)</label>
+                    <input type="text" id="adminWaConfig" placeholder="Ej: 5211234567890" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 mb-4 text-sm">
+                    
+                    <label class="block text-slate-700 text-sm font-bold mb-1">Publicar o subir precios de cada producto</label>
+                    <textarea id="adminPreciosConfig" rows="6" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 mb-4 text-sm font-mono" placeholder="Ej: Invitacion Boda: $180"></textarea>
+                                        
+                    <label class="block text-slate-700 text-sm font-bold mb-1">Datos Bancarios para Socios</label>
+                    <textarea id="adminBancoConfig" rows="4" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 mb-4 text-sm font-mono" placeholder="Ej: Banco: BBVA..."></textarea>
+                    
+                    <label class="block text-slate-700 text-sm font-bold mb-1">Mensaje de Validación (Despedida)</label>
+                    <textarea id="adminMensajeConfig" rows="3" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 mb-4 text-sm" placeholder="Ej: En unos segundos le llegará un mensaje..."></textarea>
+                   
+                    
+                    <button onclick="guardarWaAdmin()" class="bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-emerald-600 transition shadow">Guardar Configuración</button>
+                </div>
+            </div>
+            <div id="adminTabNotificaciones" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Publicar notificación para socios</h2>
+                    <input type="hidden" id="editNotiId">
+                    <textarea id="adminNotificacionInput" rows="4" class="w-full p-4 bg-slate-50 border border-slate-200 rounded-xl mb-3 focus:ring-2 focus:ring-blue-500 text-sm" placeholder="Escribe aquí el mensaje general o aviso importante que verán todos los socios en el inicio de su panel..."></textarea>
+                    <button onclick="guardarNotificacion()" class="bg-blue-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-blue-700 transition shadow">Guardar / Publicar Notificación</button>
+                    
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <h3 class="font-bold text-slate-700 mb-3">Historial de Notificaciones Publicadas</h3>
+                        <div id="listaNotificacionesAdmin" class="space-y-3"></div>
+                    </div>
+                </div>
+            </div>
+                    
+            <div id="adminTabAltaCliente" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center py-10">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">Alta Manual de Cliente</h2>
+                    <p class="text-slate-500 mb-6">Abre el formulario flotante para dar de alta a un cliente directamente.</p>
+                    <button onclick="mostrarModalNuevoCliente()" class="bg-blue-600 text-white px-6 py-3 rounded-xl text-lg font-bold shadow-lg hover:bg-blue-700 transition">+ Abrir Formulario de Alta</button>
+                </div>
+            </div>
+
+                        <div id="adminTabDemos" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Subir Link de Demostración para Socios</h2>
+                    <form onsubmit="guardarDemoAdmin(event)" class="space-y-4">
+                        <input type="text" id="demoTitulo" placeholder="Título (Ej: Demo Invitación Boda)" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        <input type="url" id="demoEnlace" placeholder="URL del demo" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                                                                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-slate-500">Sube la imagen de portada directamente:</label>
+                            <input type="file" accept="image/*" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" onchange="subirImagenSistema(this, 'demoImagen', 'demoStatus')">
+                            <input type="hidden" id="demoImagen" required>
+                            <p id="demoStatus" class="text-xs font-bold hidden"></p>
+                        </div>
+
+
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold p-3 rounded-xl hover:bg-blue-700 transition shadow">Agregar Demo</button>
+                    </form>
+                    <div class="mt-6">
+                        <h3 class="font-bold text-slate-700 mb-4">Demos Activos</h3>
+                        <div id="listaDemosAdmin" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                    </div>
+                </div>
+            </div>
+            <div id="adminTabDescargas" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Descarga de Imágenes de Socios</h2>
+                    <p class="text-sm text-slate-500 mb-6">Aquí puedes ver y descargar todas las imágenes de proyectos que los socios han subido.</p>
+                    <div id="adminDescargasContenedor" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+            <div id="adminTabPublicidad" class="admin-tab hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4">Herramientas de Publicidad para Socios</h2>
+                    <p class="text-sm text-slate-500 mb-6">Sube imágenes promocionales para que los socios las descarguen y usen en sus redes sociales.</p>
+                                       <form onsubmit="guardarPublicidadAdmin(event)" class="space-y-4 mb-6 border-b border-slate-200 pb-6">
+                        <input type="text" id="publiTitulo" placeholder="Título de la imagen (Ej: Promo Invitaciones)" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
+                        
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-slate-500">Sube la imagen directamente:</label>
+                            <input type="file" id="filePubliAdmin" accept="image/*" class="w-full p-2 bg-slate-50 border border-slate-200 rounded-xl text-sm" onchange="subirPublicidadDirecto(this)">
+                            <input type="hidden" id="publiImagen" required>
+                            <p id="publiStatus" class="text-xs font-bold hidden"></p>
+                        </div>
+
+                        <button type="submit" id="btnGuardarPubli" class="w-full bg-blue-600 text-white font-bold p-3 rounded-xl hover:bg-blue-700 transition shadow">Agregar a Galería</button>
+                    </form>
+
+                    <h3 class="font-bold text-slate-700 mb-4">Galería Publicada</h3>
+                    <div id="adminPublicidadContenedor" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="socioView" class="view-section min-h-screen bg-slate-50">
+                            <nav class="bg-[#1a1b3a] text-white p-5 shadow-md sticky top-0 z-40 border-b border-slate-800">
+            <div class="max-w-7xl mx-auto flex flex-col gap-4">
+                             <div class="text-center md:text-left mb-2">
+                    <h1 class="text-xl md:text-2xl font-black tracking-tight text-white uppercase">Mi Panel Profesional</h1>
+                    <p class="text-emerald-400 text-sm font-medium" id="socioWelcomeText">Panel de Socio - Bienvenido</p>
+                    <span id="socioAccionText" class="hidden"></span>
+                </div>
+
+                              <label class="block text-white text-sm font-bold mb-[-10px] uppercase">¿Qué deseas hacer?</label>
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+                    <select onchange="switchSocioTab(this.value)" class="flex-1 p-3 rounded-xl bg-[#1e2340] text-white border border-blue-900 font-semibold text-sm outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-inner appearance-none">
+
+                        <option value="inicio">Inicio</option>
+                        <option value="venta">Registrar Venta Nueva</option>
+                        <option value="registros">Mis registros y Fases</option>
+                        <option value="finanzas">Finanzas y Comisiones</option>
+                        <option value="herramientas">Herramientas</option>
+                                                <option value="demos">Demos y Precios</option>
+                        <option value="publicidad">Material de Publicidad</option>
+                    </select>
+
+                    <button onclick="logout()" class="px-6 py-3 rounded-xl bg-[#f43f5e] hover:bg-rose-600 text-white font-bold text-sm transition shadow-lg">Salir</button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto p-4 md:p-6">
+            
+                       <div id="socioTabDash" class="socio-tab block flex flex-col gap-6 max-w-3xl mx-auto w-full">
+                               <div id="boxInicio" class="bg-white p-8 rounded-3xl shadow-sm border border-slate-200 text-center relative overflow-hidden">
+                                      <div id="socioNotificacionBox" class="hidden mb-8 bg-blue-50 border border-blue-200 p-6 text-left shadow-md rounded-2xl">
+                        <h3 class="font-black text-blue-900 text-lg mb-3 flex items-center gap-2">📢 Bandeja de Avisos (Admin)</h3>
+                        <p id="socioNotificacionText" class="text-sm text-blue-800 whitespace-pre-wrap font-medium bg-white p-4 rounded-xl border border-blue-100"></p>
+                    </div>
+
+                    <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-black text-slate-800 mb-2">Panel de Control Principal</h2>
+                    <p class="text-slate-500 text-sm">Selecciona una opción en el menú superior para registrar ventas, ver tus comisiones o acceder a las herramientas.</p>
+                </div>
+
+                <div class="w-full space-y-6">
+
+                               <div id="boxNuevaVenta" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-1">Registrar Venta Cerrada</h2>
+
+                    <p class="text-xs text-slate-500 mb-4">Envía los datos al admin tras negociar.</p>
+                    
+                    <form onsubmit="registrarVentaSocio(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-1">Nombre del Cliente</label>
+                            <input type="text" id="ventaNombre" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        </div>
+                                               <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-1">WhatsApp del Cliente</label>
+                            <input type="tel" id="ventaWa" required placeholder="52..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        </div>
+
+                                                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 border border-slate-200 p-4 rounded-xl bg-white shadow-sm">
+                            <h3 class="md:col-span-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Datos Opcionales del Proyecto</h3>
+
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Color de página</label><input type="text" id="vColor" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Nombre o marca</label><input type="text" id="vMarca" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Dominio</label><select id="vDominio" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"><option value="">Seleccionar...</option><option value="Con dominio">Con dominio</option><option value="Sin dominio">Sin dominio</option></select></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Fecha del evento</label><input type="date" id="vFecha" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm text-slate-500"></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Padres del novio</label><input type="text" id="vPadresNovio" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Padres de la novia</label><input type="text" id="vPadresNovia" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Padrinos</label><input type="text" id="vPadrinos" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                            <div><label class="block text-slate-700 text-xs font-bold mb-1">Vestimenta / Dresscode</label><input type="text" id="vVestimenta" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                            <div class="md:col-span-2"><label class="block text-slate-700 text-xs font-bold mb-1">Plan / Paquete</label><input type="text" id="vPlan" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm"></div>
+                        </div>
+
+                        <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-1">Catálogo de Productos</label>
+                            <select id="ventaProducto" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 text-sm">
+                                <option value="">Seleccione producto...</option>
+                                <optgroup label="Comisiones Recurrentes (Mes a mes)">
+                                    <option value="Sistema de sorteos automatizados">Sistema de sorteos automatizados</option>
+                                    <option value="Plantilla de sorteos básico">Plantilla de sorteos básico</option>
+                                    <option value="Vendedor de plantilla de sorteos mensual">Vendedor de plantilla de sorteos mensual</option>
+                                    <option value="Vendedor de sistema de plantilla de Invitación digital">Vendedor de sistema de Inv. Digital</option>
+                                    <option value="Plataforma de streaming ZonaTecno mensualidad">Plataforma Streaming (Mensual)</option>
+                                </optgroup>
+                                <optgroup label="Comisión Única (Un solo pago)">
+                                    <option value="Invitación digital para boda">Invitación digital para boda</option>
+                                    <option value="Invitación digital para 15 años">Invitación digital para 15 años</option>
+                                    <option value="Invitación digital para niños infantiles">Invitación digital para niños</option>
+                                    <option value="Plataforma de streaming pago único">Plataforma Streaming (Pago Único)</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-1">Precio Final Negociado ($)</label>
+                            <input type="number" id="ventaPrecio" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500">
+                        </div>
+                                                
+                        <div>
+                            <label class="block text-slate-700 text-sm font-bold mb-2">Imágenes del Proyecto (Opcional)</label>
+                                                       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div><label class="text-[10px] font-bold text-slate-500">Portada</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vPortada', 'st_vPortada')"><input type="hidden" id="vPortada"><p id="st_vPortada" class="text-[10px] font-bold hidden mt-1"></p></div>
+                                <div><label class="text-[10px] font-bold text-slate-500">Logo</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vLogo', 'st_vLogo')"><input type="hidden" id="vLogo"><p id="st_vLogo" class="text-[10px] font-bold hidden mt-1"></p></div>
+                                <div><label class="text-[10px] font-bold text-slate-500">Fondo</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vFondo', 'st_vFondo')"><input type="hidden" id="vFondo"><p id="st_vFondo" class="text-[10px] font-bold hidden mt-1"></p></div>
+                                <div><label class="text-[10px] font-bold text-slate-500">Galería 1</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vGal1', 'st_vGal1')"><input type="hidden" id="vGal1"><p id="st_vGal1" class="text-[10px] font-bold hidden mt-1"></p></div>
+                                <div><label class="text-[10px] font-bold text-slate-500">Galería 2</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vGal2', 'st_vGal2')"><input type="hidden" id="vGal2"><p id="st_vGal2" class="text-[10px] font-bold hidden mt-1"></p></div>
+                                <div><label class="text-[10px] font-bold text-slate-500">Galería 3</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vGal3', 'st_vGal3')"><input type="hidden" id="vGal3"><p id="st_vGal3" class="text-[10px] font-bold hidden mt-1"></p></div>
+                                <div><label class="text-[10px] font-bold text-slate-500">Galería 4</label><input type="file" accept="image/*" class="w-full p-1.5 bg-slate-50 border border-slate-200 rounded text-[11px]" onchange="subirImagenSistema(this, 'vGal4', 'st_vGal4')"><input type="hidden" id="vGal4"><p id="st_vGal4" class="text-[10px] font-bold hidden mt-1"></p></div>
+                            </div>
+
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 text-white font-bold p-3.5 rounded-xl hover:bg-blue-700 transition shadow-lg mt-2">
+                            Enviar a Aprobación
+                        </button>
+                    </form>
+                </div>
+
+                                <div id="boxHerramientas" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        Herramientas Rápidas
+                    </h2>
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                            <p class="text-sm font-bold text-slate-700 mb-1">Mensaje de Validación de Cliente</p>
+                            <p class="text-xs text-slate-500 italic mb-3">"En unos segundos le llegará un mensaje de personal de ZonaTecno para validar su información, yo solo soy personal proveedor."</p>
+                            <button onclick="copiarTexto('DESPEDIDA')" class="w-full bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-3 rounded-lg text-sm font-bold transition shadow-sm">Copiar Mensaje 📋</button>
+                        </div>
+                        <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl">
+                            <p class="text-sm font-bold text-slate-700 mb-1">Datos Bancarios (Admin)</p>
+                            <p class="text-xs text-slate-500 mb-3">Copia los datos de la cuenta oficial para transferencias.</p>
+                            <button onclick="copiarTexto('BANCO')" class="w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-4 py-3 rounded-lg text-sm font-bold transition shadow-sm">Copiar Datos de Pago 🏦</button>
+                        </div>
+                                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl mt-4">
+                            <p class="text-sm font-bold text-slate-700 mb-1">Contactar Administrador</p>
+                            <p class="text-xs text-slate-500 mb-3">Si tienes dudas o requieres soporte, comunícate directamente.</p>
+                                                                                    <button onclick="window.open(`https://wa.me/${state.config.adminWa}?text=Hola%20Admin,%20necesito%20ayuda%20en%20mi%20panel%20de%20Socio.`, '_blank')" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm font-bold transition shadow-sm">Contactar por WhatsApp 💬</button>
+                        </div>                     
+                       
+                    </div>
+                </div>
+
+            </div>
+            
+            <div id="socioTabVenta" class="socio-tab hidden max-w-2xl mx-auto space-y-6">
+
+                <div class="bg-indigo-50 border border-indigo-200 p-6 rounded-2xl text-center shadow-inner">
+                    <h3 class="text-indigo-800 font-bold mb-2">📝 Formulario de Ventas</h3>
+                    <p class="text-sm text-indigo-600">Por favor, usa el panel izquierdo para registrar a tus nuevos clientes con sus respectivas imágenes.</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-2 space-y-6">
+                <div id="boxFinanzas" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-xl font-bold text-slate-800 mb-6">Dashboard Financiero</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="bg-emerald-50 border border-emerald-100 p-5 rounded-2xl relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 opacity-10">
+                                <svg class="w-24 h-24 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"></path><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <p class="text-emerald-800 text-sm font-bold mb-1">Saldo Disponible</p>
+                            <p class="text-4xl font-black text-emerald-600" id="dashDisponible">$0.00</p>
+                            <p class="text-xs text-emerald-600/70 mt-2">Comisiones aprobadas listas para retiro</p>
+                        </div>
+                                                <div class="bg-amber-50 border border-amber-100 p-5 rounded-2xl relative overflow-hidden">
+                            <div class="absolute -right-4 -bottom-4 opacity-10">
+                                <svg class="w-24 h-24 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                            </div>
+                            <p class="text-amber-800 text-sm font-bold mb-1">Comisiones Pendientes</p>
+                            <p class="text-4xl font-black text-amber-500" id="dashPendiente">$0.00</p>
+                            <p class="text-xs text-amber-600/70 mt-2">Esperando pago de cliente o renovación</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <label class="block text-slate-700 text-sm font-bold mb-2">Mis Datos Bancarios (Para recibir pagos)</label>
+                        <textarea id="socioBancoInput" rows="2" class="w-full p-3 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 text-sm mb-2" placeholder="Ej: Banco Azteca, Tarjeta: 1234..., Nombre: Juan Pérez"></textarea>
+                        <button onclick="guardarBancoSocio()" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 px-4 rounded-lg transition shadow-sm">💾 Guardar mis datos bancarios</button>
+                    </div>
+
+                    <button onclick="retirarGananciasSocio()" class="w-full bg-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-emerald-600 transition text-lg flex justify-center items-center gap-2">
+
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.086 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        Solicitar Retiro de Ganancias
+                    </button>
+                </div>
+
+                <div id="boxMatraca" class="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl relative overflow-hidden">
+                    <div class="flex justify-between items-end mb-3 relative z-10">
+                        <div>
+                            <h2 class="text-xl font-bold text-indigo-900">Nivel "La Matraca"</h2>
+                            <p class="text-sm text-indigo-700">Meta: 12 ventas aprobadas en los últimos 7 días</p>
+                        </div>
+                        <span class="text-4xl font-black text-indigo-600" id="matracaCountText">0/12</span>
+                    </div>
+                    <div class="w-full bg-indigo-200 rounded-full h-4 mb-2 overflow-hidden shadow-inner relative z-10">
+                        <div id="matracaBar" class="bg-gradient-to-r from-blue-500 to-indigo-600 h-4 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                    </div>
+                    <p class="text-sm font-semibold text-right text-indigo-800 relative z-10" id="matracaStatusText">¡Inicia tus ventas!</p>
+                    <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoOTksMTAyLDI0MSwwLjEpIi8+PC9zdmc+')] z-0"></div>
+                </div>
+
+                <div id="boxRegistros" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4">Estado de Mis Prospectos</h2>
+                    <div class="overflow-x-auto rounded-xl border border-slate-200 max-h-64 overflow-y-auto">
+                        <table class="min-w-full text-left text-sm text-slate-700">
+                            <thead class="bg-slate-100 border-b border-slate-200 sticky top-0">
+                                <tr>
+                                    <th class="p-3 font-semibold">Cliente</th>
+                                    <th class="p-3 font-semibold">Producto</th>
+                                    <th class="p-3 font-semibold">Estado</th>
+                                    <th class="p-3 font-semibold">Comisión Generada</th>
+                                </tr>
+                            </thead>
+                                                                                    <tbody id="socioSalesTable" class="divide-y divide-slate-100">
+                                </tbody>
+                        </table>
+                                        </div>
+                </div>
+            </div>
+            </div>
+
+            <div id="socioTabDemos" class="socio-tab hidden space-y-6 max-w-4xl mx-auto">
+
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6 lg:col-span-2">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+
+                        <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                        Comunidad y Demos de Muestra
+                    </h2>
+                    <p class="text-sm text-slate-500 mb-4">Copia estos enlaces para mostrarle el trabajo final a tus clientes prospecto.</p>
+                    <div id="socioDemosList" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6 lg:col-span-2">
+                                        <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Lista de Precios Oficiales Generales
+                    </h2>
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 shadow-inner">
+                        <pre id="preciosRenderSocio" class="text-sm text-slate-700 whitespace-pre-wrap font-sans font-medium leading-relaxed"></pre>
+                                       </div>
+
+                                        </div>
+                </div>
+
+            </div>
+
+            <div id="socioTabPublicidad" class="socio-tab hidden space-y-6 max-w-4xl mx-auto">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 mt-6 lg:col-span-2">
+                    <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        Material Publicitario
+                    </h2>
+                    <p class="text-sm text-slate-500 mb-4">Descarga estas imágenes oficiales para promocionar los servicios en tus redes sociales.</p>
+                    <div id="socioPublicidadList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div id="modalNuevoCliente" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+            <button onclick="cerrarModalNuevoCliente()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-xl">&times;</button>
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Alta de Cliente (Manual)</h2>
+            <form onsubmit="guardarClienteManual(event)" class="space-y-4">
+                <input type="text" id="ncNombre" placeholder="Nombre del Cliente" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500">
+                <input type="tel" id="ncWa" placeholder="WhatsApp (Ej: 52...)" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500">
+                               <select id="ncProducto" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-600">
+                    <option value="" disabled selected>Seleccione producto...</option>
+                    <optgroup label="Comisiones Recurrentes (Mes a mes)">
+                        <option value="Sistema de sorteos automatizados">Sistema de sorteos automatizados</option>
+                        <option value="Plantilla de sorteos básico">Plantilla de sorteos básico</option>
+                        <option value="Vendedor de plantilla de sorteos mensual">Vendedor de plantilla de sorteos mensual</option>
+                        <option value="Vendedor de sistema de plantilla de Invitación digital">Vendedor de sistema de Inv. Digital</option>
+                        <option value="Plataforma de streaming ZonaTecno mensualidad">Plataforma Streaming (Mensual)</option>
+                    </optgroup>
+                    <optgroup label="Comisión Única (Un solo pago)">
+                        <option value="Invitación digital para boda">Invitación digital para boda</option>
+                        <option value="Invitación digital para 15 años">Invitación digital para 15 años</option>
+                        <option value="Invitación digital para niños infantiles">Invitación digital para niños</option>
+                        <option value="Plataforma de streaming pago único">Plataforma Streaming (Pago Único)</option>
+                    </optgroup>
+                </select>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <input type="number" id="ncPrecio" placeholder="Precio Final ($)" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="ncPlan" placeholder="Plan/Paquete" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <select id="ncMeses" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-600">
+                        <option value="" disabled selected>Meses de activación</option>
+                        <option value="1">1 Mes</option>
+                        <option value="2">2 Meses</option>
+                        <option value="3">3 Meses</option>
+                        <option value="6">6 Meses</option>
+                        <option value="12">12 Meses (1 Año)</option>
+                    </select>
+                    <input type="text" id="ncPromo" placeholder="Promoción aplicada" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold p-3 rounded-xl hover:bg-blue-700 mt-4">Guardar y Generar Acceso</button>
+
+            </form>
+        </div>
+    </div>    
+        <div id="successModalSocio" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-md text-center relative">
+            <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 shadow-inner">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-2xl font-black mb-1 text-slate-800">¡Venta Enviada!</h2>
+            <p class="text-slate-500 mb-4 text-sm">Tu prospecto está ahora en nuestro sistema.</p>
+            
+            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl mb-4 text-left">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Fases de Aprobación</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3"><span class="w-6 h-6 rounded-full bg-amber-100 text-amber-700 text-xs font-bold flex items-center justify-center">1</span><span class="text-sm font-medium text-slate-700">Pendiente (Admin recibe info)</span></div>
+                    <div class="flex items-center gap-3"><span class="w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs font-bold flex items-center justify-center">2</span><span class="text-sm font-medium text-slate-700">En Revisión (Contactando cliente)</span></div>
+                    <div class="flex items-center gap-3"><span class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center">3</span><span class="text-sm font-medium text-slate-700">Aprobado (Comisión acreditada)</span></div>
+                </div>
+            </div>
+
+            <div class="bg-amber-50 border border-amber-200 p-4 rounded-xl mb-6 text-left">
+                <p class="text-xs text-amber-800 font-medium leading-relaxed">
+                    ⏱️ Si pasan <b>10 minutos</b> y tu venta sigue en Fase 1, ve a tu panel, haz clic en "Copiar para Admin" y envíaselo por WhatsApp. <br><br>💡 Avisa a tu cliente que le llegará un mensaje de ZonaTecno.
+                </p>
+            </div>
+            <button onclick="document.getElementById('successModalSocio').classList.add('hidden')" class="bg-blue-600 text-white font-bold py-3.5 w-full rounded-xl hover:bg-blue-700 transition shadow-lg">
+                Entendido, ir al panel
+            </button>
+        </div>
+    </div>
+
+    <div id="modalEditarCliente" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+            <button onclick="cerrarModalEditarCliente()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-xl">&times;</button>
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Editar Datos del Cliente</h2>
+            <form onsubmit="guardarEdicionCliente(event)" class="space-y-4">
+                <input type="hidden" id="editClientId">
+                <div><label class="block text-xs font-bold text-slate-500">Nombre</label><input type="text" id="editNombre" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-xs font-bold text-slate-500">WhatsApp</label><input type="text" id="editWa" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-xs font-bold text-slate-500">Producto / Servicio</label><input type="text" id="editProducto" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                                                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-slate-500">Precio ($)</label><input type="number" id="editPrecio" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                    <div><label class="block text-xs font-bold text-slate-500">Plan</label><input type="text" id="editPlan" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500">Meses de activación</label>
+                    <select id="editMeses" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 text-slate-600">
+                        <option value="1">1 Mes</option>
+                        <option value="2">2 Meses</option>
+                        <option value="3">3 Meses</option>
+                        <option value="6">6 Meses</option>
+                        <option value="12">12 Meses (1 Año)</option>
+                    </select>
+                </div>
+                <div class="p-3 bg-blue-50 border border-blue-100 rounded-lg mt-2">
+
+                    <p class="text-xs text-blue-700 mb-2 font-semibold">Tú asignas el acceso (Opcional):</p>
+                    <div class="mb-2"><label class="block text-xs font-bold text-slate-500">Correo de Acceso</label><input type="email" id="editEmail" class="w-full p-2 bg-white border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"></div>
+                    <div><label class="block text-xs font-bold text-slate-500">Contraseña</label><input type="text" id="editPass" class="w-full p-2 bg-white border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"></div>
+                </div>
+                <button type="submit" class="w-full bg-amber-500 text-white font-bold p-3 rounded-xl hover:bg-amber-600 mt-2 shadow transition">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEditarSocio" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-50 p-4 transition-opacity">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
+            <button onclick="cerrarModalEditarSocio()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 font-bold text-xl">&times;</button>
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">Editar Datos del Socio</h2>
+            <form onsubmit="guardarEdicionSocio(event)" class="space-y-4">
+                <input type="hidden" id="editSocioId">
+                <div><label class="block text-xs font-bold text-slate-500">Nombre Completo</label><input type="text" id="editSocioNombre" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-xs font-bold text-slate-500">Correo Electrónico</label><input type="email" id="editSocioEmail" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-xs font-bold text-slate-500">Contraseña</label><input type="text" id="editSocioPass" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500"></div>
+                <div><label class="block text-xs font-bold text-slate-500">Fecha de Inicio</label><input type="date" id="editSocioFecha" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded text-slate-600 focus:ring-2 focus:ring-blue-500"></div>
+                <button type="submit" class="w-full bg-amber-500 text-white font-bold p-3 rounded-xl hover:bg-amber-600 mt-2 shadow transition">Actualizar Socio</button>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="globalToast" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl hidden transition-opacity z-50 flex items-center gap-3">
+        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span id="toastMsg" class="font-medium text-sm">Notificación</span>
+    </div>
+
+    <script>
+        // CONFIG & STATE (Using LocalStorage as robust fallback & quick cache mimicking DB)
+        const PRODUCTOS_RECURRENTES = [
+            "Sistema de sorteos automatizados",
+            "Plantilla de sorteos básico",
+            "Vendedor de plantilla de sorteos mensual",
+            "Vendedor de sistema de plantilla de Invitación digital",
+            "Plataforma de streaming ZonaTecno mensualidad"
+        ];
+
+        let state = {
+            currentUser: null,
+            config: { adminWa: "5211234567890" },
+            users: [{ id: 'admin', email: 'zonatecno@admin.com', role: 'admin' }],
+            clients: [],
+            sales: [],
+            commissions: []
+        };
+                          function initApp() {
+            try {
+                const saved = localStorage.getItem('ZT_DB_V2');
+                if (saved) {
+                    state = JSON.parse(saved);
+                    if(state.currentUser) {
+                        const localUser = state.users.find(u => u.id === state.currentUser.id || u.email === state.currentUser.email);
+                        if(localUser && localUser.activo === false) {
+                            state.currentUser = null;
+                            saveDb();
+                            mostrarVista('landingView');
+                            return;
+                        }
+                        let rolStr = state.currentUser.role === 'admin' ? 'ADMINISTRADOR' : 'SOCIO';
+                        let nombreCorto = state.currentUser.email.split('@')[0];
+                        if (document.getElementById('loadRoleText')) document.getElementById('loadRoleText').innerText = rolStr;
+                        if (document.getElementById('loadNameText')) document.getElementById('loadNameText').innerText = nombreCorto;
+
+                        setTimeout(() => {
+                            showToast("👋 Bienvenido de nuevo: " + state.currentUser.email);
+                            if(state.currentUser.role === 'admin') {
+                                mostrarVista('adminView');
+                                renderAdmin();
+                            } else {
+                                mostrarVista('socioView');
+                                renderSocio();
+                            }
+                        }, 2000); // 2 segundos para apreciar la animación
+                        return;
+                    }
+                } else {
+                    saveDb();
+                }
+                
+                // Si no entra al "return" de arriba, significa que no hay usuario válido
+                mostrarVista('landingView');
+            } catch (error) {
+                // Seguro anti-bucle: Si algo falla al cargar, corta la carga y muestra el login
+                console.warn("Seguro activado: Error al leer datos locales, redirigiendo a login.", error);
+                mostrarVista('landingView');
+            }
+        }                                          
+
+        function saveDb() {
+            localStorage.setItem('ZT_DB_V2', JSON.stringify(state));
+        }
+
+        // ================= UTILS & UI =================
+        function mostrarVista(viewId) {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            document.getElementById(viewId).classList.add('active-view');
+            window.scrollTo(0, 0); 
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('globalToast');
+            document.getElementById('toastMsg').innerText = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => toast.classList.add('hidden'), 3500);
+        }
+
+        function generateId() { return Math.random().toString(36).substr(2, 9); }
+        
+        function generarPassword() { return Math.random().toString(36).slice(-8); }
+
+                       function copiarTexto(tipo) {
+            let texto = "";
+            if(tipo === 'BANCO') texto = state.config.datosBanco || "--- DATOS BANCARIOS ZONATECNO ---\nBanco: BBVA\nCLABE: 012345678901234567\nTitular: ZonaTecno Administración";
+            if(tipo === 'DESPEDIDA') texto = state.config.mensajeValidacion || "En unos segundos le llegará un mensaje de personal de ZonaTecno para validar su información, yo solo soy personal proveedor.";
+
+            const ta = document.createElement("textarea");
+            ta.value = texto;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast("Copiado al portapapeles");
+        }
+
+        // ================= AUTH =================
+      
+        async function handleLogin() {
+            const email = document.getElementById('emailInput').value.trim();
+            const pass = document.getElementById('passInput').value;
+            if(!email || !pass) return alert("Ingrese credenciales");
+            
+            const btn = document.getElementById('btnLogin');
+            btn.innerHTML = "Validando..."; btn.disabled = true;
+
+            // Lógica Híbrida: Intenta usar Firebase si está vivo, sino usa Local Fallback para garantizar funcionamiento.
+            let userRole = 'socio';
+            if (email === 'zonatecno@admin.com') userRole = 'admin';
+            
+                       // Check in local state first for generated socios
+            const localUser = state.users.find(u => u.email === email);
+            if(localUser) {
+                if(localUser.activo === false) {
+                    btn.innerHTML = "Ingresar"; btn.disabled = false;
+                    return alert("Tu cuenta ha sido bloqueada. Contacta al administrador.");
+                }
+                userRole = localUser.role;
+            }
+
+            try {
+
+                if(window.signInWithEmailAndPassword && window.fbAuth) {
+                    await window.signInWithEmailAndPassword(window.fbAuth, email, pass);
+                }
+            } catch (e) {
+                console.warn("Firebase Auth falló, procediendo con modo Local/Demo", e);
+            }
+
+                                              state.currentUser = { email, role: userRole, id: localUser ? localUser.id : email };
+                        saveDb();
+
+            btn.innerHTML = "Iniciando..."; btn.disabled = true;
+            mostrarVista('loadingView');
+            
+            let rolStr = userRole === 'admin' ? 'ADMINISTRADOR' : 'SOCIO';
+            if (document.getElementById('loadRoleText')) document.getElementById('loadRoleText').innerText = rolStr;
+            document.getElementById('loadNameText').innerText = email.split('@')[0];
+            
+            setTimeout(() => {
+                if (userRole === 'admin') {
+                    mostrarVista('adminView');
+                    renderAdmin();
+                } else {
+                    mostrarVista('socioView');
+                    renderSocio();
+                }
+                btn.innerHTML = "Ingresar"; btn.disabled = false;
+            }, 1500);
+
+        }
+
+                       function logout() {
+            state.currentUser = null;
+            saveDb();
+            if (window.fbAuth && window.fbAuth.signOut) { window.fbAuth.signOut().catch(()=>{}); }
+            window.location.reload();
+        }
+
+        function solicitarPruebaWA() {
+            window.open(`https://wa.me/${state.config.adminWa}?text=Hola,%20solicito%20prueba%20para%20ser%20socio%20ZonaTecno`, '_blank');
+        }
+
+        // ================= MOTOR DE COMISIONES =================
+        function calcularVentasSemanales(socioId) {
+            const hace7Dias = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            return state.sales.filter(s => s.socioId === socioId && s.estado === 'Aprobado' && s.fecha >= hace7Dias).length;
+        }
+
+        function generarEstructuraComisiones(precio, producto, socioId) {
+            const esRecurrente = PRODUCTOS_RECURRENTES.includes(producto);
+            const ventasSemanales = calcularVentasSemanales(socioId);
+            const esMatraca = ventasSemanales >= 12;
+            let arrComisiones = [];
+
+            if(esMatraca) {
+                arrComisiones.push({ mes: 1, monto: precio * 0.30, estado: 'Disponible', pagado: false });
+                if(esRecurrente) {
+                    arrComisiones.push({ mes: 2, monto: precio * 0.10, estado: 'Pendiente', pagado: false });
+                    arrComisiones.push({ mes: 3, monto: precio * 0.10, estado: 'Pendiente', pagado: false });
+                    arrComisiones.push({ mes: 4, monto: precio * 0.10, estado: 'Pendiente', pagado: false });
+                }
+            } else {
+                arrComisiones.push({ mes: 1, monto: precio * 0.20, estado: 'Disponible', pagado: false });
+                if(esRecurrente) {
+                    arrComisiones.push({ mes: 2, monto: precio * 0.05, estado: 'Pendiente', pagado: false });
+                }
+            }
+            return arrComisiones;
+        }
+
+        // ================= ADMIN LOGIC =================
+                        function switchAdminTab(tab) {
+            document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
+            if(tab === 'ventas') document.getElementById('adminTabVentas').classList.remove('hidden');
+            if(tab === 'clientes') document.getElementById('adminTabClientes').classList.remove('hidden');
+            if(tab === 'alta_cliente') document.getElementById('adminTabAltaCliente').classList.remove('hidden');
+                       if(tab === 'alta_socio') document.getElementById('adminTabAltaSocio').classList.remove('hidden');
+            if(tab === 'socios') document.getElementById('adminTabSocios').classList.remove('hidden');
+            if(tab === 'comisiones') document.getElementById('adminTabComisiones').classList.remove('hidden');
+            if(tab === 'notificaciones') document.getElementById('adminTabNotificaciones').classList.remove('hidden');
+
+                        if(tab === 'demos') document.getElementById('adminTabDemos').classList.remove('hidden');
+            if(tab === 'precios_config') document.getElementById('adminTabPreciosConfig').classList.remove('hidden');
+            if(tab === 'descargas') document.getElementById('adminTabDescargas').classList.remove('hidden');
+            if(tab === 'publicidad') document.getElementById('adminTabPublicidad').classList.remove('hidden');
+
+            renderAdmin();
+        }
+
+               function renderAdmin() {
+            document.getElementById('adminWaConfig').value = state.config.adminWa;
+            const defaultPrices = `--- INVITACIONES (PAGO ÚNICO) ---\nInvitación digital para boda: $180\nInvitación digital para 15 años: $180\nInvitación digital para niños: $150\nPlataforma Streaming Pago Único: $250\n\n--- SISTEMAS RECURRENTES (MES) ---\nSistema de sorteos automatizados: $350/m\nPlantilla de sorteos básico: $150/m\nVendedor de sorteos mensual: $200/m\nVendedor de Inv. Digital: $250/m\nPlataforma Streaming: $99/m`;
+            if (!state.config.precios || state.config.precios === "Ingresa aquí tu lista oficial...") {
+                state.config.precios = defaultPrices;
+            }
+                        document.getElementById('adminPreciosConfig').value = state.config.precios;
+            document.getElementById('adminBancoConfig').value = state.config.datosBanco || "--- DATOS BANCARIOS ZONATECNO ---\nBanco: BBVA\nCLABE: 012345678901234567\nTitular: ZonaTecno Administración";
+            document.getElementById('adminMensajeConfig').value = state.config.mensajeValidacion || "En unos segundos le llegará un mensaje de personal de ZonaTecno para validar su información, yo solo soy personal proveedor.";
+            if(document.getElementById('adminPubliConfig')) document.getElementById('adminPubliConfig').value = state.config.publicidadImg || "";
+
+                       // Render Socios List Detallado
+
+            const lsSocios = document.getElementById('listadoSocios');
+            const arrSocios = state.users.filter(u => u.role === 'socio');
+            lsSocios.innerHTML = '';
+                       if(arrSocios.length > 0) {
+                arrSocios.forEach(u => {
+                    const diasActivo = u.fechaInicio ? Math.floor((Date.now() - u.fechaInicio) / (1000 * 60 * 60 * 24)) : 0;
+                    const estadoText = u.activo === false ? 'Bloqueado' : 'Activo';
+                    const bgEstado = u.activo === false ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700';
+                    
+                    const ventasSemana = calcularVentasSemanales(u.id);
+                    const esMatraca = ventasSemana >= 12;
+                    const txtComision = esMatraca 
+                        ? "👑 MODO MATRACA (Aplica 10%): 30% Directa | 10% Recurrente (3 meses)"
+                        : "👤 Normal: 20% Directa | 5% Recurrente (1 mes)";
+                    const colorComision = esMatraca ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-slate-100 text-slate-700 border-slate-200";
+
+                    lsSocios.innerHTML += `
+                        <li class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col gap-2 relative mb-2 shadow-sm">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="font-bold text-slate-800 text-lg">${u.nombre || 'Sin nombre registrado'}</p>
+                                    <p class="text-sm text-blue-600 font-medium">${u.email}</p>
+                                    <p class="text-[11px] text-slate-500 mt-1">Clave de acceso: ${u.pass || 'Oculta'}</p>
+                                </div>
+                                <span class="text-xs font-bold px-2 py-1 rounded ${bgEstado}">${estadoText}</span>
+                            </div>
+                            <div class="mt-2 p-3 rounded-lg border ${colorComision}">
+                                <p class="text-xs font-bold mb-1">Nivel de Comisión Actual (${ventasSemana} ventas recientes):</p>
+                                <p class="text-[11px] font-medium">${txtComision}</p>
+                                <p class="text-[10px] opacity-80 mt-1">*Los pagos únicos (Ej. Invitaciones) reciben solo comisión directa, sin mensualidades.</p>
+                            </div>
+                            <div class="text-xs text-slate-600 border-t border-slate-200 pt-2 mt-2 flex justify-between">
+                                <span>Día de Alta: ${u.fechaInicio ? new Date(u.fechaInicio).toLocaleDateString() : 'Desconocida'}</span>
+                                <span class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">Días de actividad: ${diasActivo}</span>
+                            </div>
+                                                       <div class="flex gap-2 mt-2">
+                                <button onclick="editarSocioAdmin('${u.id}')" class="flex-1 bg-blue-100 hover:bg-blue-200 text-blue-700 py-2 rounded-lg text-xs font-bold transition">Editar Socio</button>
+                                <button onclick="bloquearSocio('${u.id}')" class="flex-1 bg-amber-100 hover:bg-amber-200 text-amber-700 py-2 rounded-lg text-xs font-bold transition">${u.activo === false ? 'Desbloquear Acceso' : 'Bloquear Acceso'}</button>
+                                <button onclick="eliminarSocio('${u.id}')" class="flex-1 bg-rose-100 hover:bg-rose-200 text-rose-700 py-2 rounded-lg text-xs font-bold transition">Eliminar Socio</button>
+                            </div>
+
+                        </li>
+                    `;
+                });
+            } else {
+
+                lsSocios.innerHTML = "<li class='text-slate-500 italic p-4 text-center'>No hay socios registrados.</li>";
+            }
+            // Render Gestión de Comisiones Admin
+            const lsComisiones = document.getElementById('listadoComisionesAdmin');
+            if (lsComisiones) {
+                lsComisiones.innerHTML = '';
+                const arrSociosCom = state.users.filter(u => u.role === 'socio');
+                if(arrSociosCom.length > 0) {
+                    arrSociosCom.forEach(u => {
+                        const misVentasSocio = state.sales.filter(s => s.socioId === u.id);
+                        let disp = 0, pend = 0, cobrado = 0, totalGen = 0;
+                         let detallesComisionesText = "";
+                        misVentasSocio.forEach(v => {
+                            if(v.comisiones) {
+                                v.comisiones.forEach(c => {
+                                    totalGen += c.monto;
+                                    if(c.estado === 'Disponible' && !c.pagado) disp += c.monto;
+                                    
+                                    if(c.estado === 'Pendiente') {
+                                        pend += c.monto;
+                                        detallesComisionesText += `<div class="text-xs text-slate-600 bg-white p-2 rounded mb-1 border border-slate-200 flex justify-between items-center"><div class="flex-1"><span class="font-bold text-amber-600">Mes ${c.mes}:</span> $${c.monto.toFixed(2)} - <span class="italic">${v.producto}</span></div><button onclick="cancelarComisionPendiente('${v.id}', ${c.mes})" class="text-[10px] bg-rose-100 text-rose-700 px-2 py-1 rounded hover:bg-rose-200 font-bold ml-2 transition">Cancelar</button></div>`;
+                                    }
+                                    if(c.pagado) cobrado += c.monto;
+                                });
+                            }
+                        });                       
+                        
+                        const ventasSemana = calcularVentasSemanales(u.id);
+                        const esMatraca = ventasSemana >= 12;
+                        const nivelText = esMatraca ? "Nivel Matraca Activo (30%)" : "Nivel Normal (20%)";
+                        const nivelColor = esMatraca ? "text-amber-700 bg-amber-100 border border-amber-300" : "text-blue-700 bg-blue-100 border border-blue-300";
+
+                                                lsComisiones.innerHTML += `
+                            <div class="border border-slate-200 rounded-xl p-5 shadow-sm bg-slate-50 relative">
+                                <div class="flex flex-col sm:flex-row justify-between items-start gap-3 mb-4">
+                                    <div class="w-full sm:w-auto">
+                                        <h3 class="font-bold text-slate-800 text-lg">${u.nombre || u.email}</h3>
+                                        <span class="text-[11px] font-bold px-2 py-0.5 rounded shadow-sm inline-block mt-1 ${nivelColor}">${nivelText}</span>
+                                    </div>
+                                    <button onclick="marcarComisionesPagadas('${u.id}')" class="w-full sm:w-auto text-xs bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition">💰 Marcar 'Disponible' como Pagado</button>
+                                </div>
+
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm">
+                                        <p class="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Generado Histórico</p>
+                                        <p class="text-xl font-black text-slate-700">$${totalGen.toFixed(2)}</p>
+                                    </div>
+                                    <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 shadow-sm">
+                                        <p class="text-[10px] text-amber-700 font-bold uppercase tracking-wider mb-1">Pendiente (Meses)</p>
+                                        <p class="text-xl font-black text-amber-600">$${pend.toFixed(2)}</p>
+                                    </div>
+                                    <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-sm ring-2 ring-emerald-100">
+                                        <p class="text-[10px] text-emerald-700 font-bold uppercase tracking-wider mb-1">Disponible a Pagar</p>
+                                        <p class="text-xl font-black text-emerald-600">$${disp.toFixed(2)}</p>
+                                    </div>
+                                                                       <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-sm">
+                                        <p class="text-[10px] text-blue-700 font-bold uppercase tracking-wider mb-1">Ya Cobrado</p>
+                                        <p class="text-xl font-black text-blue-600">$${cobrado.toFixed(2)}</p>
+                                    </div>
+                                </div>
+                                ${detallesComisionesText !== "" ? `<div class="mt-3 bg-amber-50 p-3 rounded-xl border border-amber-200"><p class="text-[10px] text-amber-800 font-bold uppercase mb-2">Desglose de meses y comisiones pendientes:</p>${detallesComisionesText}</div>` : ""}
+                            </div>
+                        `;
+
+                    });
+                } else {
+                    lsComisiones.innerHTML = '<p class="text-slate-500 italic text-sm">No hay socios activos para calcular comisiones.</p>';
+                }
+            }
+
+
+            // Render Ventas Pendientes
+                    function cancelarComisionPendiente(saleId, mes) {
+            if(!confirm("¿Cancelar esta comisión pendiente? El socio ya no recibirá este porcentaje si su cliente no renovó.")) return;
+            const sale = state.sales.find(s => s.id === saleId);
+            if(sale && sale.comisiones) {
+                const com = sale.comisiones.find(c => c.mes === mes);
+                if(com) {
+                    com.estado = 'Cancelada por Baja';
+                    saveDb(); renderAdmin(); showToast("Comisión pendiente cancelada exitosamente.");
+                }
+            }
+        }
+
+            const contVentas = document.getElementById('adminSalesContainer');
+            contVentas.innerHTML = '';
+                        const pendientes = state.sales.filter(s => s.estado === 'Pendiente' || s.estado === 'En revisión').sort((a,b) => b.fecha - a.fecha);
+            
+            pendientes.forEach(v => {
+                let badgeClass = v.estado === 'Pendiente' ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700";
+                let btnRevision = v.estado === 'Pendiente' ? `<button onclick="marcarRevision('${v.id}')" class="w-full bg-blue-500 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-600 mb-2">Pasar a Fase 2: En revisión</button>` : '';
+                
+                contVentas.innerHTML += `
+                    <div class="border border-slate-200 p-4 rounded-xl relative">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-bold text-slate-800">${v.clienteNombre}</h3>
+                            <span class="${badgeClass} text-xs px-2 py-1 rounded font-bold">${v.estado}</span>
+                        </div>
+                        <p class="text-sm text-slate-600 mb-1">
+                            <a href="https://wa.me/${v.wa.replace(/\D/g,'')}?text=Hola%20${encodeURIComponent(v.clienteNombre)},%20somos%20ZonaTecno" target="_blank" class="text-emerald-600 font-bold underline flex items-center gap-1">
+                                💬 Contactar Cliente: ${v.wa}
+                            </a>
+                        </p>
+                        <p class="text-xs text-slate-600 mb-2">Socio: ${v.socioEmail}</p>
+                        <div class="bg-slate-50 p-2 rounded text-[11px] mb-2 text-slate-700 leading-tight">
+                            <span class="font-bold block text-sm mb-1 text-slate-800">${v.producto}</span>
+                            <span class="block text-emerald-600 font-bold mb-2">Cobro Negociado: $${v.precio}</span>
+                                                                                   <div class="mt-3 mb-3 border-t border-slate-200 pt-3">
+                                <span class="font-bold text-[11px] text-slate-500 uppercase tracking-wider mb-2 block">📸 Archivos Adjuntos del Socio</span>
+                                <div class="grid grid-cols-2 gap-2">
+                                    ${v.imgs && v.imgs.portada ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.portada}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Portada</a><button onclick="copiarDemoSocio('${v.imgs.portada}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                    ${v.imgs && v.imgs.logo ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.logo}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Logo</a><button onclick="copiarDemoSocio('${v.imgs.logo}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                    ${v.imgs && v.imgs.fondo ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.fondo}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Fondo</a><button onclick="copiarDemoSocio('${v.imgs.fondo}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                    ${v.imgs && v.imgs.gal1 ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.gal1}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Galería 1</a><button onclick="copiarDemoSocio('${v.imgs.gal1}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                    ${v.imgs && v.imgs.gal2 ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.gal2}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Galería 2</a><button onclick="copiarDemoSocio('${v.imgs.gal2}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                    ${v.imgs && v.imgs.gal3 ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.gal3}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Galería 3</a><button onclick="copiarDemoSocio('${v.imgs.gal3}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                    ${v.imgs && v.imgs.gal4 ? `<div class="bg-white p-1.5 border border-slate-200 rounded flex flex-col items-center shadow-sm"><a href="${v.imgs.gal4}" target="_blank" class="text-[10px] bg-indigo-50 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-100 w-full text-center font-bold mb-1">🖼️ Ver Galería 4</a><button onclick="copiarDemoSocio('${v.imgs.gal4}')" class="text-[10px] text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 w-full rounded py-1 font-semibold transition">🔗 Copiar Link</button></div>` : ''}
+                                </div>
+                            </div>
+
+                            <button onclick="copiarAdminDatos('${v.id}')" class="w-full mt-1 bg-slate-200 text-slate-700 px-2 py-1.5 rounded font-bold hover:bg-slate-300 text-xs text-left shadow-sm">📋 Copiar Datos (Solo Texto)</button>
+                        </div>
+
+                        ${btnRevision}
+                                                <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-200 mb-3 shadow-sm">
+                            <label class="block text-[11px] font-bold text-indigo-800 mb-2">Acreditar Comisión (Fase 3: Aprobado)</label>
+                            <div class="flex flex-col sm:flex-row gap-2 w-full">
+                                <input type="number" id="comision_${v.id}" placeholder="Dejar vacío = Automático" class="w-full sm:flex-1 p-2 rounded-lg border border-indigo-300 text-sm focus:ring-2 focus:ring-indigo-400 focus:outline-none">
+                                <button onclick="aprobarVentaPersonalizada('${v.id}')" class="w-full sm:w-auto bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-emerald-600 shadow transition-all">Aprobar Venta</button>
+                            </div>
+                        </div>
+
+                        <button onclick="rechazarVenta('${v.id}')" class="w-full bg-rose-100 text-rose-700 text-xs font-bold py-2 rounded-lg hover:bg-rose-200">Rechazar / Cancelar</button>
+                    </div>
+                `;
+            });
+
+                      if(!pendientes.length) contVentas.innerHTML = "<p class='text-slate-400 text-sm italic'>Bandeja vacía.</p>";
+
+                                            // Render Clientes Activos (Dividido Totalmente con botonesEditar)
+                        const tMisClientes = document.getElementById('adminClientsTableMisClientes');
+            const tSociosClientes = document.getElementById('adminClientsTableSocios');
+            if (tMisClientes) tMisClientes.innerHTML = '';
+            if (tSociosClientes) tSociosClientes.innerHTML = '';
+            
+            const misClientes = state.clients.filter(c => c.socioId === 'admin_manual' || c.migrado).sort((a,b)=>a.expireDate - b.expireDate);
+                        const clientesSocios = state.clients.filter(c => {
+                if (c.migrado || c.socioOriginal) {
+                    let mesesComision = 1;
+                    const saleRel = state.sales.find(s => s.id === c.saleIdRef);
+                    if (saleRel && saleRel.comisiones && saleRel.comisiones.length > 0) {
+                        mesesComision = Math.max(...saleRel.comisiones.map(x => x.mes));
+                    }
+                    const fechaBase = c.fechaMigracion || (c.expireDate - (c.meses||1)*30*24*60*60*1000);
+                    const comisionVencida = Date.now() > (fechaBase + (mesesComision * 30 * 24 * 60 * 60 * 1000));
+                    return !comisionVencida;
+                }
+                return c.socioId !== 'admin_manual';
+            }).sort((a,b)=>a.expireDate - b.expireDate);
+
+            // FUNCIÓN DE CÁLCULO DE FECHAS Y ESTADOS
+
+            function getFechaEstadoHTML(c) {
+                let mesesAct = c.meses || 1;
+                let startDate = new Date(c.expireDate - (mesesAct * 30 * 24 * 60 * 60 * 1000)).toLocaleDateString();
+                let dateStr = new Date(c.expireDate).toLocaleDateString();
+                let daysLeft = Math.ceil((c.expireDate - Date.now()) / (1000 * 60 * 60 * 24));
+                let estadoStr = "";
+                
+                if (c.status !== 'activo') {
+                    estadoStr = '<span class="text-[10px] font-black text-slate-600 bg-slate-200 px-2 py-1 rounded block mt-1 w-max">PAUSADO</span>';
+                } else if (daysLeft <= 0) {
+                    estadoStr = '<span class="text-[10px] font-black text-white bg-rose-600 px-2 py-1 rounded block mt-1 w-max">BLOQUEADO</span>';
+                } else if (daysLeft <= 3) {
+                    estadoStr = `<span class="text-[10px] font-bold text-amber-800 bg-amber-200 px-2 py-1 rounded block mt-1 w-max">Renovación en ${daysLeft} días</span>`;
+                } else {
+                    estadoStr = `<span class="text-[10px] font-medium text-emerald-800 bg-emerald-100 px-2 py-1 rounded block mt-1 w-max">${daysLeft} días restantes</span>`;
+                }
+                
+                return `
+                    <div class="text-[10px] text-slate-500 mb-0.5">Inició: ${startDate} (${mesesAct} mes${mesesAct>1?'es':''})</div>
+                    <div class="font-bold text-slate-800 text-[12px]">Vence: ${dateStr}</div>
+                    ${estadoStr}
+                `;
+            }
+
+            if(misClientes.length > 0 && tMisClientes) {
+                misClientes.forEach(c => {
+                    const isExpiring = (c.expireDate - Date.now()) < (7 * 24 * 60 * 60 * 1000);
+                    let extraInfo = c.migrado ? `<p class="text-[10px] text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded inline-block font-bold mt-1">Migrado del socio: ${c.socioOriginal}</p>` : '';
+                    
+                    tMisClientes.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition ${isExpiring && c.status === 'activo' ? 'bg-rose-50' : ''}">
+                            <td class="p-3 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">${c.nombre}</p>
+                                <a href="https://wa.me/${c.wa}" target="_blank" class="text-xs text-blue-500 font-semibold hover:underline">WA: ${c.wa}</a><br>
+                                ${extraInfo}
+                            </td>
+                            <td class="p-3 border-b border-slate-100 text-sm">
+                                <span class="block text-slate-700 font-medium truncate max-w-[150px]">${c.producto}</span>
+                                <span class="text-xs font-black text-emerald-600">$${c.precio} / ${c.plan}</span>
+                            </td>
+                            <td class="p-3 border-b border-slate-100">
+                                ${getFechaEstadoHTML(c)}
+                            </td>
+                            <td class="p-3 border-b border-slate-100 text-center grid grid-cols-2 gap-1 items-center justify-center">
+                                <button onclick="copiarClienteAdmin('${c.id}')" class="text-[11px] bg-blue-100 text-blue-700 px-2 py-1.5 rounded hover:bg-blue-200 font-bold transition">📋 Copiar</button>
+                                <button onclick="editarClienteAdmin('${c.id}')" class="text-[11px] bg-amber-100 text-amber-700 px-2 py-1.5 rounded hover:bg-amber-200 font-bold transition">✏️ Editar</button>
+                                <button onclick="borrarClienteAdmin('${c.id}')" class="text-[11px] bg-rose-100 text-rose-700 px-2 py-1.5 rounded hover:bg-rose-200 font-bold transition">🗑️ Eliminar</button>
+                                ${c.status === 'activo' ? 
+                                    `<button onclick="marcarClienteInactivo('${c.id}')" class="text-[11px] bg-slate-200 text-slate-700 px-2 py-1.5 rounded hover:bg-slate-300 font-bold transition">Pausar</button>` : 
+                                    `<button onclick="renovarCliente('${c.id}')" class="text-[11px] bg-emerald-100 text-emerald-700 px-2 py-1.5 rounded hover:bg-emerald-200 font-bold transition">Renovar</button>`}
+                            </td>
+                        </tr>`;
+                });
+            } else if (tMisClientes) {
+                tMisClientes.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-slate-400 italic text-sm">No tienes clientes directos.</td></tr>`;
+            }
+
+            if(clientesSocios.length > 0 && tSociosClientes) {
+                clientesSocios.forEach(c => {
+                    const isExpiring = (c.expireDate - Date.now()) < (7 * 24 * 60 * 60 * 1000);
+                                        let idBusqueda = c.socioOriginal || c.socioId;
+                    let socioInfo = state.users.find(u => u.id === idBusqueda || u.email === idBusqueda);
+                    let socioEmail = socioInfo ? socioInfo.email : idBusqueda;
+                    
+                    let mesesCom = 1;
+                    const saleCheck = state.sales.find(s => s.id === c.saleIdRef);
+                    if(saleCheck && saleCheck.comisiones && saleCheck.comisiones.length > 0) {
+                        mesesCom = Math.max(...saleCheck.comisiones.map(x => x.mes));
+                    }
+                    
+                    let badgeMigrado = c.migrado ? `<span class="bg-indigo-100 text-indigo-800 px-2 py-1 rounded text-[10px] font-black mt-2 block border border-indigo-300 shadow-sm leading-tight">Transferido a clientes Tecno<br><span class="text-indigo-600 font-medium">Comisión activa por: ${mesesCom} mes(es)</span></span>` : '';
+                    let botonMigrar = c.migrado ? '' : `<button onclick="migrarCliente('${c.id}')" class="col-span-2 text-[11px] bg-indigo-100 text-indigo-700 px-2 py-1.5 rounded hover:bg-indigo-200 font-bold transition mt-1">📥 Migrar a mis clientes</button>`;
+                    tSociosClientes.innerHTML += `
+                        <tr class="hover:bg-slate-50 transition ${isExpiring && c.status === 'activo' ? 'bg-rose-50' : ''}">
+                            <td class="p-3 border-b border-slate-100">
+                                <p class="font-bold text-slate-800">${c.nombre}</p>
+                                <a href="https://wa.me/${c.wa}" target="_blank" class="text-xs text-blue-500 font-semibold hover:underline">WA: ${c.wa}</a>
+                                ${badgeMigrado}
+                            </td>
+                            <td class="p-3 border-b border-slate-100 text-sm">
+                                <span class="block text-slate-700 font-medium truncate max-w-[150px]">${c.producto}</span>
+                                <span class="text-xs font-black text-emerald-600">$${c.precio} / ${c.plan}</span>
+                            </td>
+                            <td class="p-3 border-b border-slate-100">
+                                ${getFechaEstadoHTML(c)}
+                            </td>
+                            <td class="p-3 border-b border-slate-100 text-xs text-slate-500">
+                                <span class="block truncate max-w-[120px]" title="${socioEmail}">${socioEmail}</span>
+                            </td>
+                            <td class="p-3 border-b border-slate-100 text-center grid grid-cols-2 gap-1 items-center justify-center">
+                                <button onclick="copiarClienteAdmin('${c.id}')" class="text-[11px] bg-blue-100 text-blue-700 px-2 py-1.5 rounded hover:bg-blue-200 font-bold transition">📋 Copiar</button>
+                                <button onclick="editarClienteAdmin('${c.id}')" class="text-[11px] bg-amber-100 text-amber-700 px-2 py-1.5 rounded hover:bg-amber-200 font-bold transition">✏️ Editar</button>
+                                <button onclick="borrarClienteAdmin('${c.id}')" class="col-span-2 text-[11px] bg-rose-100 text-rose-700 px-2 py-1.5 rounded hover:bg-rose-200 font-bold transition">🗑️ Eliminar</button>
+                                ${botonMigrar}
+                            </td>
+                        </tr>`;
+                });
+            } else if (tSociosClientes) {
+                tSociosClientes.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-400 italic text-sm">No hay clientes de socios.</td></tr>`;
+            }
+
+                      
+            const listaD = document.getElementById('listaDemosAdmin');
+            if(listaD) {
+                listaD.innerHTML = '';
+                if(!state.demos) state.demos = [];
+                state.demos.forEach(d => {
+                    listaD.innerHTML += `
+                        <div class="border border-slate-200 rounded-xl overflow-hidden flex flex-col">
+                            <img src="${d.imagen}" class="w-full h-24 object-cover">
+                            <div class="p-3">
+                                <h4 class="font-bold text-sm text-slate-800 truncate">${d.titulo}</h4>
+                                <a href="${d.enlace}" target="_blank" class="text-xs text-blue-500 truncate block mb-2">${d.enlace}</a>
+                                <button onclick="eliminarDemo('${d.id}')" class="w-full text-xs bg-rose-50 text-rose-600 py-1 rounded hover:bg-rose-100">Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+                        const listDescargas = document.getElementById('adminDescargasContenedor');
+            if (listDescargas) {
+                listDescargas.innerHTML = '';
+                let hasImages = false;
+                state.sales.forEach(v => {
+                    if(v.imgs) {
+                        const imgKeys = Object.keys(v.imgs).filter(k => v.imgs[k]);
+                        if(imgKeys.length > 0) {
+                            hasImages = true;
+                            let imgsHtml = '';
+                                                        imgKeys.forEach(k => {
+                                const linkDescarga = v.imgs[k].replace('/upload/', '/upload/fl_attachment/');
+                                imgsHtml += `<a href="${linkDescarga}" class="block text-xs bg-indigo-100 text-indigo-700 px-2 py-1.5 mb-1 rounded hover:bg-indigo-200 text-center font-bold transition-colors">⬇️ Descargar archivo: ${k}</a>`;
+                            });
+
+                            listDescargas.innerHTML += `
+                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl shadow-sm">
+                                    <h4 class="font-bold text-sm text-slate-800 mb-1">Proyecto: ${v.clienteNombre}</h4>
+                                    <p class="text-xs text-slate-500 mb-3">Socio responsable: ${v.socioEmail}</p>
+                                    <div class="flex flex-col gap-1">
+                                        ${imgsHtml}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    }
+                });
+                                              if(!hasImages) listDescargas.innerHTML = "<p class='text-sm text-slate-500 italic col-span-full'>Aún no se han subido imágenes por parte de los socios.</p>";
+            }
+
+            // Render Notificaciones Publicadas
+            const lsNotis = document.getElementById('listaNotificacionesAdmin');
+                        const contAdminPubli = document.getElementById('adminPublicidadContenedor');
+            if (contAdminPubli) {
+                contAdminPubli.innerHTML = '';
+                if(!state.galeriaPublicidad) state.galeriaPublicidad = [];
+                state.galeriaPublicidad.forEach(p => {
+                    contAdminPubli.innerHTML += `
+                        <div class="border border-slate-200 rounded-xl overflow-hidden flex flex-col shadow-sm">
+                            <img src="${p.url}" class="w-full h-32 object-cover bg-slate-100">
+                            <div class="p-3 bg-slate-50">
+                                <h4 class="font-bold text-sm text-slate-800 truncate mb-2">${p.titulo}</h4>
+                                <button onclick="eliminarPublicidadAdmin('${p.id}')" class="w-full text-xs bg-rose-100 text-rose-700 py-1.5 rounded font-bold hover:bg-rose-200 transition shadow-sm">Eliminar Imagen</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                if(!state.galeriaPublicidad.length) contAdminPubli.innerHTML = "<p class='text-xs text-slate-500 col-span-full italic'>No hay imágenes subidas.</p>";
+            }
+
+            if(lsNotis) {
+                lsNotis.innerHTML = '';
+                if(state.notificaciones && state.notificaciones.length > 0) {
+                    state.notificaciones.forEach(n => {
+                        lsNotis.innerHTML += `
+                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl text-sm relative shadow-sm">
+                            <p class="text-slate-700 pr-16 whitespace-pre-wrap font-medium">${n.texto}</p>
+                            <p class="text-[10px] text-slate-400 mt-2 font-bold">${new Date(n.fecha).toLocaleString()}</p>
+                            <div class="absolute top-4 right-4 flex flex-col gap-2">
+                                <button onclick="editarNotificacion('${n.id}')" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-bold transition">Editar</button>
+                                <button onclick="eliminarNotificacion('${n.id}')" class="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded font-bold transition">Eliminar</button>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    lsNotis.innerHTML = '<p class="text-xs text-slate-400 italic">No hay notificaciones publicadas.</p>';
+                }
+            }
+
+        }
+
+                    function marcarComisionesPagadas(socioId) {
+
+            if(!confirm("¿Confirmas que ya depositaste el saldo 'Disponible' a este socio? El dinero pasará al historial de 'Ya Cobrado'.")) return;
+            const misVentasSocio = state.sales.filter(s => s.socioId === socioId);
+            let algoPagado = false;
+            misVentasSocio.forEach(v => {
+                if(v.comisiones) {
+                    v.comisiones.forEach(c => {
+                        if(c.estado === 'Disponible' && !c.pagado) {
+                            c.pagado = true;
+                            c.estado = 'Pagado';
+                            algoPagado = true;
+                        }
+                    });
+                }
+            });
+            if(algoPagado) {
+                saveDb(); renderAdmin(); showToast("Comisiones liquidadas y marcadas como pagadas.");
+            } else {
+                alert("Este socio no tiene saldo disponible pendiente de pago.");
+            }
+        }
+
+
+        function aprobarVenta(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if(!sale) return;
+            
+            sale.estado = 'Aprobado';
+            // Trigger comission calculation
+            sale.comisiones = generarEstructuraComisiones(sale.precio, sale.producto, sale.socioId);
+            
+            // Create Client Access automatically
+                        const pwd = "";
+            const autoEmail = "";
+
+            const newClient = {
+                id: generateId(), nombre: sale.clienteNombre, wa: sale.wa,
+                email: autoEmail, password: pwd, producto: sale.producto,
+                precio: sale.precio, plan: "Mensual", meses: 1, status: 'activo',
+                expireDate: Date.now() + (30 * 24 * 60 * 60 * 1000), // +30 days
+                socioId: sale.socioId, saleIdRef: sale.id
+            };
+            state.clients.push(newClient);
+            saveDb();
+            renderAdmin();
+            showToast("Venta aprobada, comisiones generadas y cliente dado de alta.");
+        }
+        function marcarRevision(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if(sale) {
+                sale.estado = 'En revisión';
+                saveDb(); renderAdmin(); renderSocio(); showToast("Prospecto movido a revisión.");
+            }
+        }
+
+        function aprobarVentaPersonalizada(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if(!sale) return;
+            
+            const montoInput = document.getElementById(`comision_${saleId}`).value;
+            let manualComision = parseFloat(montoInput);
+            
+            sale.estado = 'Aprobado';
+            sale.comisiones = generarEstructuraComisiones(sale.precio, sale.producto, sale.socioId);
+            
+            if(!isNaN(manualComision) && manualComision >= 0) {
+                if(sale.comisiones.length > 0) {
+                    sale.comisiones[0].monto = manualComision;
+                } else {
+                    sale.comisiones.push({ mes: 1, monto: manualComision, estado: 'Disponible', pagado: false });
+                }
+            }
+            
+                       const pwd = "";
+            const autoEmail = "";
+
+            const newClient = {
+                id: generateId(), nombre: sale.clienteNombre, wa: sale.wa,
+                email: autoEmail, password: pwd, producto: sale.producto,
+                precio: sale.precio, plan: "Mensual", meses: 1, status: 'activo',
+                expireDate: Date.now() + (30 * 24 * 60 * 60 * 1000),
+                socioId: sale.socioId, saleIdRef: sale.id
+            };
+            state.clients.push(newClient);
+            saveDb(); renderAdmin(); showToast("Venta aprobada con comisión editada.");
+        }
+
+        function rechazarVenta(saleId) {
+            const sale = state.sales.find(s => s.id === saleId);
+            if(sale) { sale.estado = 'Rechazado'; saveDb(); renderAdmin(); showToast("Venta rechazada."); }
+        }
+
+        function marcarClienteInactivo(clientId) {
+            if(!confirm("¿Dar de baja? Esto cancelará comisiones futuras al socio.")) return;
+            const c = state.clients.find(x => x.id === clientId);
+            if(c) {
+                c.status = 'inactivo';
+                // Find related sale and cancel pending commissions
+                const sale = state.sales.find(s => s.id === c.saleIdRef);
+                if(sale && sale.comisiones) {
+                    sale.comisiones.forEach(com => {
+                        if(com.estado === 'Pendiente') com.estado = 'Cancelada por Baja';
+                    });
+                }
+                saveDb(); renderAdmin(); showToast("Cliente inactivo, comisiones ajustadas.");
+            }
+        }
+
+        function renovarCliente(clientId) {
+            const c = state.clients.find(x => x.id === clientId);
+            if(c) {
+                c.status = 'activo';
+                c.expireDate = Date.now() + (30 * 24 * 60 * 60 * 1000);
+                
+                // Liberar la siguiente comisión pendiente del socio si existe
+                const sale = state.sales.find(s => s.id === c.saleIdRef);
+                if(sale && sale.comisiones) {
+                    const nextCom = sale.comisiones.find(com => com.estado === 'Pendiente');
+                    if(nextCom) nextCom.estado = 'Disponible';
+                }
+                saveDb(); renderAdmin(); showToast("Cliente renovado. Comisión liberada.");
+            }
+        }
+        function guardarDemoAdmin(e) {
+            e.preventDefault();
+            if(!state.demos) state.demos = [];
+            state.demos.push({
+                id: generateId(),
+                titulo: document.getElementById('demoTitulo').value,
+                enlace: document.getElementById('demoEnlace').value,
+                imagen: document.getElementById('demoImagen').value || 'https://via.placeholder.com/150?text=Demo'
+            });
+            saveDb(); renderAdmin(); showToast("Demo agregado exitosamente.");
+            document.getElementById('demoTitulo').value = '';
+            document.getElementById('demoEnlace').value = '';
+            document.getElementById('demoImagen').value = '';
+        }
+
+        function eliminarDemo(id) {
+            state.demos = state.demos.filter(d => d.id !== id);
+            saveDb(); renderAdmin(); showToast("Demo eliminado.");
+        }
+                window.subirPublicidadDirecto = async (fileInput) => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const statusText = document.getElementById('publiStatus');
+            const hiddenInput = document.getElementById('publiImagen');
+            const btnSubmit = document.getElementById('btnGuardarPubli');
+            
+            statusText.innerHTML = '⏳ Subiendo imagen a la nube...';
+            statusText.classList.remove('hidden');
+            statusText.style.color = '#3b82f6'; // Azul
+            btnSubmit.disabled = true;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'RIFASECONOMICASMX'); // Tu preset de SaaS
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/duxcsjc4z/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.secure_url) {
+                    hiddenInput.value = data.secure_url;
+                    statusText.innerHTML = '✅ ¡Imagen subida y lista para guardar!';
+                    statusText.style.color = '#10b981'; // Verde
+                    btnSubmit.disabled = false;
+                } else {
+                    throw new Error('Error al subir');
+                }
+            } catch (error) {
+                statusText.innerHTML = '❌ Error al subir la imagen. Intenta de nuevo.';
+                statusText.style.color = '#ef4444'; // Rojo
+                btnSubmit.disabled = false;
+                fileInput.value = '';
+            }
+        };
+
+                function guardarPublicidadAdmin(e) {
+            e.preventDefault();
+            if(!state.galeriaPublicidad) state.galeriaPublicidad = [];
+            state.galeriaPublicidad.push({
+                id: generateId(),
+                titulo: document.getElementById('publiTitulo').value,
+                url: document.getElementById('publiImagen').value
+            });
+            saveDb(); renderAdmin(); showToast("Imagen publicitaria agregada.");
+            document.getElementById('publiTitulo').value = '';
+            document.getElementById('publiImagen').value = '';
+        }
+
+        function eliminarPublicidadAdmin(id) {
+            if(!confirm("¿Eliminar esta imagen publicitaria de las cuentas de los socios?")) return;
+            state.galeriaPublicidad = state.galeriaPublicidad.filter(p => p.id !== id);
+            saveDb(); renderAdmin(); showToast("Imagen publicitaria eliminada.");
+        }
+
+                        function migrarCliente(idCliente) {
+            if(!confirm("¿Seguro que deseas migrar este cliente a tu panel principal? Seguirá viéndose en el historial del socio pero lo administrarás tú.")) return;
+            const c = state.clients.find(x => x.id === idCliente);
+            if(c) {
+                let socioInfo = state.users.find(u => u.id === c.socioId);
+                c.socioOriginal = socioInfo ? socioInfo.email : c.socioId; 
+                c.migrado = true;
+                c.fechaMigracion = Date.now();
+                c.socioId = 'admin_manual';
+                saveDb(); renderAdmin(); showToast("Cliente migrado exitosamente.");
+            }
+        }
+
+
+                               function editarClienteAdmin(id) {
+            const c = state.clients.find(x => x.id === id);
+            if(c) {
+                document.getElementById('editClientId').value = c.id;
+                document.getElementById('editNombre').value = c.nombre;
+                document.getElementById('editWa').value = c.wa;
+                document.getElementById('editProducto').value = c.producto;
+                document.getElementById('editPrecio').value = c.precio;
+                document.getElementById('editPlan').value = c.plan;
+                document.getElementById('editMeses').value = c.meses || 1;
+                document.getElementById('editEmail').value = c.email || '';
+                document.getElementById('editPass').value = c.password || '';
+                document.getElementById('modalEditarCliente').classList.remove('hidden');
+            }
+        }
+        function cerrarModalEditarCliente() { document.getElementById('modalEditarCliente').classList.add('hidden'); }
+               function guardarEdicionCliente(e) {
+            e.preventDefault();
+            const id = document.getElementById('editClientId').value;
+            const c = state.clients.find(x => x.id === id);
+            if(c) {
+                c.nombre = document.getElementById('editNombre').value;
+                c.wa = document.getElementById('editWa').value;
+                c.producto = document.getElementById('editProducto').value;
+                c.precio = parseFloat(document.getElementById('editPrecio').value);
+                c.plan = document.getElementById('editPlan').value;
+                
+                const nuevosMeses = parseInt(document.getElementById('editMeses').value);
+                const mesesAnteriores = c.meses || 1;
+                
+                               if (nuevosMeses !== mesesAnteriores) {
+                    if (c.socioId === 'admin_manual' && !c.migrado) {
+                        const fechaInicioReal = c.expireDate - (mesesAnteriores * 30 * 24 * 60 * 60 * 1000);
+                        c.expireDate = fechaInicioReal + (nuevosMeses * 30 * 24 * 60 * 60 * 1000);
+                    }
+                    c.meses = nuevosMeses;
+                }
+
+                
+                c.email = document.getElementById('editEmail').value;
+                c.password = document.getElementById('editPass').value;
+                saveDb(); renderAdmin(); cerrarModalEditarCliente(); showToast("Datos del cliente actualizados.");
+            }
+        }
+
+        function borrarClienteAdmin(id) {
+            if(!confirm("⚠️ ¿Eliminar cliente por completo? Esta acción es irreversible.")) return;
+            state.clients = state.clients.filter(x => x.id !== id);
+            saveDb(); renderAdmin(); showToast("Cliente eliminado de la base de datos.");
+        }
+
+
+           function eliminarSocio(idSocio) {
+            if(!confirm("⚠️ ¿Estás seguro de ELIMINAR a este socio por completo? Perderá acceso inmediato y sus registros de ventas pendientes quedarán suspendidos.")) return;
+            state.users = state.users.filter(u => u.id !== idSocio);
+            saveDb(); renderAdmin(); showToast("Socio eliminado permanentemente del sistema.");
+        }
+
+        function bloquearSocio(idSocio) {
+            const u = state.users.find(x => x.id === idSocio);
+            if(u) {
+                u.activo = u.activo === false ? true : false;
+                saveDb(); renderAdmin(); showToast(u.activo ? "Acceso de socio restaurado." : "Socio bloqueado correctamente.");
+            }
+        }
+               
+        function editarSocioAdmin(id) {
+            const u = state.users.find(x => x.id === id);
+            if(u) {
+                document.getElementById('editSocioId').value = u.id;
+                document.getElementById('editSocioNombre').value = u.nombre || '';
+                document.getElementById('editSocioEmail').value = u.email || '';
+                document.getElementById('editSocioPass').value = u.pass || '';
+                let d = new Date(u.fechaInicio || Date.now());
+                document.getElementById('editSocioFecha').value = d.toISOString().split('T')[0];
+                document.getElementById('modalEditarSocio').classList.remove('hidden');
+            }
+        }
+        function cerrarModalEditarSocio() { document.getElementById('modalEditarSocio').classList.add('hidden'); }
+        function guardarEdicionSocio(e) {
+            e.preventDefault();
+            const id = document.getElementById('editSocioId').value;
+            const u = state.users.find(x => x.id === id);
+            if(u) {
+                u.nombre = document.getElementById('editSocioNombre').value;
+                u.email = document.getElementById('editSocioEmail').value;
+                u.pass = document.getElementById('editSocioPass').value;
+                u.fechaInicio = new Date(document.getElementById('editSocioFecha').value).getTime();
+                saveDb(); renderAdmin(); cerrarModalEditarSocio(); showToast("Datos del socio actualizados.");
+            }
+        }
+
+              function crearSocio(e) {
+            e.preventDefault();
+            const nombre = document.getElementById('newSocioNombre').value.trim();
+            const fecha = document.getElementById('newSocioFecha').value;
+            const email = document.getElementById('newSocioEmail').value.trim();
+            const pass = document.getElementById('newSocioPass').value;
+            
+            state.users.push({ 
+                id: generateId(), 
+                nombre: nombre,
+                fechaInicio: new Date(fecha).getTime(),
+                email: email, 
+                pass: pass,
+                role: 'socio',
+                activo: true
+            });
+            saveDb();
+            document.getElementById('newSocioNombre').value = '';
+            document.getElementById('newSocioFecha').value = '';
+            document.getElementById('newSocioEmail').value = '';
+            document.getElementById('newSocioPass').value = '';
+            renderAdmin();
+            showToast("Socio creado exitosamente.");
+        }
+
+        function guardarWaAdmin() {
+            state.config.adminWa = document.getElementById('adminWaConfig').value;
+            state.config.precios = document.getElementById('adminPreciosConfig').value;
+            state.config.datosBanco = document.getElementById('adminBancoConfig').value;
+            state.config.mensajeValidacion = document.getElementById('adminMensajeConfig').value;
+            saveDb(); showToast("Configuración, Precios y Datos Bancarios guardados.");
+            renderAdmin();
+        }
+                                            
+        function guardarNotificacion() {
+            if(!state.notificaciones) state.notificaciones = [];
+            const texto = document.getElementById('adminNotificacionInput').value.trim();
+            const idEdit = document.getElementById('editNotiId').value;
+            
+            if(!texto) return alert("Escribe un mensaje para publicar.");
+            
+            if(idEdit) {
+                const n = state.notificaciones.find(x => x.id === idEdit);
+                if(n) n.texto = texto;
+            } else {
+                state.notificaciones.unshift({ id: generateId(), texto, fecha: Date.now() });
+            }
+            document.getElementById('adminNotificacionInput').value = '';
+            document.getElementById('editNotiId').value = '';
+            saveDb(); renderAdmin(); showToast("Notificación publicada.");
+        }
+        function editarNotificacion(id) {
+            const n = state.notificaciones.find(x => x.id === id);
+            if(n) {
+                document.getElementById('adminNotificacionInput').value = n.texto;
+                document.getElementById('editNotiId').value = n.id;
+            }
+        }
+        function eliminarNotificacion(id) {
+            if(!confirm("¿Eliminar esta notificación? Dejará de verse en el panel de socios.")) return;
+            state.notificaciones = state.notificaciones.filter(x => x.id !== id);
+            saveDb(); renderAdmin(); showToast("Notificación eliminada.");
+        }
+
+        function mostrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.remove('hidden'); }
+        function cerrarModalNuevoCliente() { document.getElementById('modalNuevoCliente').classList.add('hidden'); }
+        
+        function guardarClienteManual(e) {
+            e.preventDefault();
+            const cliente = {
+                id: generateId(),
+                nombre: document.getElementById('ncNombre').value,
+                wa: document.getElementById('ncWa').value,
+                producto: document.getElementById('ncProducto').value,
+                precio: parseFloat(document.getElementById('ncPrecio').value),
+                plan: document.getElementById('ncPlan').value,
+                meses: parseInt(document.getElementById('ncMeses').value),
+                status: 'activo',
+                email: document.getElementById('ncNombre').value.replace(/\s/g,'').toLowerCase() + "@cliente.zt.com",
+                password: generarPassword(),
+                socioId: 'admin_manual',
+                expireDate: Date.now() + (parseInt(document.getElementById('ncMeses').value) * 30 * 24 * 60 * 60 * 1000)
+            };
+            state.clients.push(cliente);
+            saveDb(); cerrarModalNuevoCliente(); renderAdmin();
+            showToast("Cliente manual creado y acceso generado.");
+        }
+
+        // ================= SOCIO LOGIC =================
+        function renderSocio() {
+                    const spanAccion = document.getElementById('socioAccionText');
+            if(spanAccion && state.currentUser) {
+                const nombreCorto = state.currentUser.email.split('@')[0];
+                spanAccion.innerText = `¿Qué quieres hacer hoy (${nombreCorto})?`;
+            }
+
+            // Stats
+            const misVentas = state.sales.filter(s => s.socioId === state.currentUser.id);
+            let disp = 0, pend = 0;
+            
+                       misVentas.forEach(v => {
+                if(v.comisiones) {
+                    v.comisiones.forEach(c => {
+                        if(c.estado === 'Disponible' && !c.pagado) disp += c.monto;
+                        if(c.estado === 'Pendiente') pend += c.monto;
+                    });
+                }
+            });
+            
+            document.getElementById('dashDisponible').innerText = `$${disp.toFixed(2)}`;
+            document.getElementById('dashPendiente').innerText = `$${pend.toFixed(2)}`;
+            
+            const uActual = state.users.find(u => u.id === state.currentUser.id);
+            if(document.getElementById('socioBancoInput') && uActual) {
+                document.getElementById('socioBancoInput').value = uActual.datosBanco || "";
+            }
+
+            const preSocio = document.getElementById('preciosRenderSocio');
+
+            if(preSocio) preSocio.innerText = state.config.precios || "Contacta al admin para ver precios.";
+          
+
+            const boxNoti = document.getElementById('socioNotificacionBox');
+
+            const txtNoti = document.getElementById('socioNotificacionText');
+                       if(state.notificaciones && state.notificaciones.length > 0) {
+                txtNoti.innerText = state.notificaciones[0].texto;
+                boxNoti.classList.remove('hidden');
+                boxNoti.style.display = 'block';
+            } else {
+                boxNoti.classList.add('hidden');
+                boxNoti.style.display = 'none';
+            }
+
+            // Matraca
+            const ventSemanales = calcularVentasSemanales(state.currentUser.id);
+            document.getElementById('matracaCountText').innerText = `${ventSemanales}/12`;
+            let pct = Math.min((ventSemanales/12)*100, 100);
+            document.getElementById('matracaBar').style.width = `${pct}%`;
+            
+            const txtMatraca = document.getElementById('matracaStatusText');
+            if(ventSemanales >= 12) { txtMatraca.innerText = "¡MODO MATRACA ACTIVO! (30% Comisón)"; txtMatraca.className = "text-sm font-black text-emerald-600 relative z-10 text-right"; }
+            else { txtMatraca.innerText = `Faltan ${12-ventSemanales} para Nivel Matraca`; txtMatraca.className = "text-sm font-semibold text-indigo-800 relative z-10 text-right"; }
+
+            // Tabla Ventas
+            const tbl = document.getElementById('socioSalesTable');
+            tbl.innerHTML = '';
+            misVentas.sort((a,b)=>b.fecha - a.fecha).forEach(v => {
+                               let statusCls = "bg-amber-100 text-amber-700";
+                if(v.estado === 'En revisión') statusCls = "bg-blue-100 text-blue-700";
+                if(v.estado === 'Aprobado') statusCls = "bg-emerald-100 text-emerald-700";
+                if(v.estado === 'Rechazado') statusCls = "bg-rose-100 text-rose-700";
+
+                let infoCom = "<span class='text-xs text-slate-400'>Calculando...</span>";
+                if(v.comisiones && v.estado === 'Aprobado') {
+                    let totalAprobado = v.comisiones.filter(c=>c.estado==='Disponible').reduce((s,c)=>s+c.monto, 0);
+                    infoCom = `<span class="font-bold text-emerald-600">$${totalAprobado.toFixed(2)}</span>`;
+                }                        
+                let tiempoPasado = Date.now() - v.fecha;
+                let btnUrgencia = `<button onclick="enviarWaUrgente('${v.id}')" class="mt-2 text-[10px] bg-emerald-500 text-white px-2 py-1 rounded shadow hover:bg-emerald-600 w-full font-bold flex justify-center gap-1">📲 Enviar Info a Admin</button>`;
+                
+                if(v.estado === 'Pendiente' && tiempoPasado > 600000) {
+                    btnUrgencia += `<button onclick="copiarUrgencia('${v.id}')" class="mt-1 text-[10px] bg-rose-500 text-white px-2 py-1 rounded shadow hover:bg-rose-600 w-full font-bold">⚠️ ¡Demora 10m! Copiar Datos</button>`;
+                }
+
+                tbl.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-3 border-b border-slate-100">
+                            <span class="font-medium text-slate-800 block">${v.clienteNombre}</span>
+                            ${btnUrgencia}
+                        </td>
+                        <td class="p-3 border-b border-slate-100 text-xs text-slate-600">${v.producto}</td>
+                        <td class="p-3 border-b border-slate-100"><span class="${statusCls} px-2 py-1 rounded text-[11px] font-bold block text-center">${v.estado}</span></td>
+                        <td class="p-3 border-b border-slate-100 text-right">${infoCom}</td>
+                    </tr>
+                                `;
+
+            });
+            
+            if(!misVentas.length) tbl.innerHTML = "<tr><td colspan='4' class='text-center p-4 text-slate-400'>Sin prospectos registrados aún.</td></tr>";
+
+            
+            const listDemoSocio = document.getElementById('socioDemosList');
+            if(listDemoSocio) {
+                listDemoSocio.innerHTML = '';
+                if(!state.demos) state.demos = [];
+                state.demos.forEach(d => {
+                    listDemoSocio.innerHTML += `
+                        <div class="border border-slate-200 rounded-xl flex items-center p-2 gap-3 hover:bg-slate-50 transition">
+                            <img src="${d.imagen}" class="w-16 h-16 object-cover rounded-lg bg-slate-100">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-sm text-slate-800 truncate">${d.titulo}</h4>
+                                <div class="flex gap-2 mt-1">
+                                    <a href="${d.enlace}" target="_blank" class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 text-center flex-1">Ver</a>
+                                    <button onclick="copiarDemoSocio('${d.enlace}')" class="text-[11px] font-bold bg-slate-200 text-slate-700 px-2 py-1 rounded hover:bg-slate-300 flex-1">Copiar Link</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                                if(!state.demos.length) listDemoSocio.innerHTML = "<p class='text-xs text-slate-500'>Aún no hay demos cargados.</p>";
+            }
+                        const contSocioPubli = document.getElementById('socioPublicidadList');
+            if (contSocioPubli) {
+                contSocioPubli.innerHTML = '';
+                if(!state.galeriaPublicidad) state.galeriaPublicidad = [];
+                                state.galeriaPublicidad.forEach(p => {
+                    const linkDescarga = p.url.replace('/upload/', '/upload/fl_attachment/');
+                    contSocioPubli.innerHTML += `
+                        <div class="border border-slate-200 rounded-xl overflow-hidden flex flex-col shadow-sm bg-white">
+                            <img src="${p.url}" class="w-full h-32 object-cover bg-slate-100">
+                            <div class="p-3">
+                                <h4 class="font-bold text-sm text-slate-800 truncate mb-2">${p.titulo}</h4>
+                                <a href="${linkDescarga}" class="block w-full text-xs bg-indigo-500 text-white text-center py-2.5 rounded-lg font-bold hover:bg-indigo-600 transition shadow-sm">📥 Descargar Original</a>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                if(!state.galeriaPublicidad.length) contSocioPubli.innerHTML = "<p class='text-xs text-slate-500 col-span-full italic'>Aún no hay material disponible.</p>";
+            }
+
+            switchSocioTab('inicio');
+        }
+
+                   function switchSocioTab(tab) {
+            // 1. Apagado total
+            const todasLasSecciones = ['socioTabDash', 'socioTabDemos', 'socioTabPublicidad', 'boxInicio', 'boxNuevaVenta', 'boxHerramientas', 'boxFinanzas', 'boxMatraca', 'boxRegistros'];
+            todasLasSecciones.forEach(id => { 
+                const el = document.getElementById(id);
+                if (el) {
+                    el.style.display = 'none'; 
+                    el.classList.add('hidden');
+                }
+            });
+
+            // 2. Función segura
+            const encender = (id, displayMode) => {
+                const el = document.getElementById(id);
+                if(el) {
+                    el.classList.remove('hidden');
+                    el.style.display = displayMode;
+                }
+            };
+
+            // 3. Lógica a prueba de errores de HTML
+            if (tab === 'demos') {
+                encender('socioTabDemos', 'block');
+            } else if (tab === 'publicidad') {
+                encender('socioTabPublicidad', 'block');
+            } else {
+
+                // VITAL: Mantener encendido el contenedor padre porque el HTML lo envuelve todo
+                encender('socioTabDash', 'flex'); 
+                
+                if (tab === 'inicio') {
+                    encender('boxInicio', 'block');
+                } else if (tab === 'venta') {
+                    encender('boxNuevaVenta', 'block');
+                } else if (tab === 'herramientas') {
+                    encender('boxHerramientas', 'block');
+                } else if (tab === 'registros') {
+                    encender('boxRegistros', 'block');
+                } else if (tab === 'finanzas') {
+                    encender('boxFinanzas', 'block');
+                    encender('boxMatraca', 'block');
+                }
+            }
+        }
+                                                             
+                function enviarWaUrgente(idVenta) {
+            const v = state.sales.find(s => s.id === idVenta);
+            if(v) {
+                if(v.estado === 'Pendiente') {
+                    v.estado = 'En revisión';
+                    saveDb();
+                    renderSocio();
+                    showToast("Actualizado a Fase 2");
+                }
+                const msj = encodeURIComponent(`Hola Admin, te paso los datos del cliente para mi venta:\n👤 Cliente: ${v.clienteNombre}\n📱 WA: ${v.wa}\n🛒 Producto: ${v.producto}\n💰 Cobro: $${v.precio}\n\nQuedo a la espera de la revisión.`);
+                window.open(`https://wa.me/${state.config.adminWa}?text=${msj}`, '_blank');
+            }
+        }
+
+                function copiarAdminDatos(idVenta) {
+            const v = state.sales.find(s => s.id === idVenta);
+            if(v) {
+                let txt = `👤 Cliente: ${v.clienteNombre}\n📱 WA: ${v.wa}\n🛒 Producto: ${v.producto}\n💰 Precio: $${v.precio}\n🤝 Socio: ${v.socioEmail}`;
+                if(v.detallesExtra) {
+                    txt += `\n\n--- DATOS DEL PROYECTO ---`;
+                    if(v.detallesExtra.color) txt += `\n🎨 Color: ${v.detallesExtra.color}`;
+                    if(v.detallesExtra.marca) txt += `\n🏷️ Marca: ${v.detallesExtra.marca}`;
+                    if(v.detallesExtra.dominio) txt += `\n🌐 Dominio: ${v.detallesExtra.dominio}`;
+                    if(v.detallesExtra.fecha) txt += `\n📅 Fecha Evento: ${v.detallesExtra.fecha}`;
+                    if(v.detallesExtra.padresNovio) txt += `\n👨‍👩‍👦 Padres Novio: ${v.detallesExtra.padresNovio}`;
+                    if(v.detallesExtra.padresNovia) txt += `\n👨‍👩‍👧 Padres Novia: ${v.detallesExtra.padresNovia}`;
+                    if(v.detallesExtra.padrinos) txt += `\n🎁 Padrinos: ${v.detallesExtra.padrinos}`;
+                    if(v.detallesExtra.vestimenta) txt += `\n👔 Vestimenta: ${v.detallesExtra.vestimenta}`;
+                    if(v.detallesExtra.plan) txt += `\n📋 Plan: ${v.detallesExtra.plan}`;
+                }
+                const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                showToast("Datos de venta copiados al portapapeles");
+            }
+        }
+
+        function copiarUrgencia(idVenta) {
+            const v = state.sales.find(s => s.id === idVenta);
+            if(v) {
+                const msj = `🚨 *Aviso de Demora Fase 1*\nHola Admin, este prospecto lleva más de 10 min en mi panel:\n\n👤 *Cliente:* ${v.clienteNombre}\n📱 *WA:* ${v.wa}\n🛒 *Producto:* ${v.producto}\n💰 *Cobro:* $${v.precio}\n\nPor favor contáctalo para pasar a Fase 2.`;
+                const ta = document.createElement("textarea");
+                ta.value = msj;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+                showToast("Datos copiados. Pégalos en WhatsApp del Admin.");
+            }
+        }
+                function copiarClienteAdmin(clientId) {
+            const c = state.clients.find(x => x.id === clientId);
+            if(c) {
+                let txt = `👤 Cliente: ${c.nombre}\n📱 WA: ${c.wa}\n🛒 Producto: ${c.producto}\n🗓️ Vence: ${new Date(c.expireDate).toLocaleDateString()}`;
+                if(c.email && c.email.trim() !== '') txt += `\n✉️ Email Acceso: ${c.email}`;
+                if(c.password && c.password.trim() !== '') txt += `\n🔑 Contraseña: ${c.password}`;
+                
+                const ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                showToast("Datos copiados (sin correos falsos si no existen)");
+            }
+        }
+
+        function copiarDemoSocio(link) {
+            const ta = document.createElement("textarea");
+            ta.value = link;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast("Enlace de demo copiado");
+        }
+
+        function registrarVentaSocio(e) {
+            e.preventDefault();
+            const nueva = {
+                id: generateId(),
+                socioId: state.currentUser.id,
+                socioEmail: state.currentUser.email,
+                clienteNombre: document.getElementById('ventaNombre').value.trim(),
+                wa: document.getElementById('ventaWa').value.trim(),
+                producto: document.getElementById('ventaProducto').value,
+                detallesExtra: {
+                    color: document.getElementById('vColor').value,
+                    marca: document.getElementById('vMarca').value,
+                    dominio: document.getElementById('vDominio').value,
+                    fecha: document.getElementById('vFecha').value,
+                    padresNovio: document.getElementById('vPadresNovio').value,
+                    padresNovia: document.getElementById('vPadresNovia').value,
+                    padrinos: document.getElementById('vPadrinos').value,
+                    vestimenta: document.getElementById('vVestimenta').value,
+                    plan: document.getElementById('vPlan').value
+                },
+
+                precio: parseFloat(document.getElementById('ventaPrecio').value),
+                imgs: {
+                    portada: document.getElementById('vPortada').value,
+                    logo: document.getElementById('vLogo').value,
+                    fondo: document.getElementById('vFondo').value,
+                    gal1: document.getElementById('vGal1').value,
+                    gal2: document.getElementById('vGal2').value,
+                    gal3: document.getElementById('vGal3').value,
+                    gal4: document.getElementById('vGal4').value
+                },
+                estado: 'Pendiente',
+                fecha: Date.now()
+            };
+            
+            state.sales.push(nueva);
+            saveDb();
+            document.getElementById('ventaNombre').value = '';
+            document.getElementById('ventaWa').value = '';
+                 document.getElementById('ventaPrecio').value = '';
+            ['vColor','vMarca','vDominio','vFecha','vPadresNovio','vPadresNovia','vPadrinos','vVestimenta','vPlan'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('ventaProducto').selectedIndex = 0;
+            ['vPortada','vLogo','vFondo','vGal1','vGal2','vGal3','vGal4'].forEach(id => document.getElementById(id).value = '');
+
+
+            renderSocio();
+            document.getElementById('successModalSocio').classList.remove('hidden');
+        }
+
+                        function retirarGananciasSocio() {
+            const monto = document.getElementById('dashDisponible').innerText;
+            if(monto === "$0.00") return alert("No tienes saldo disponible para retirar.");
+            
+            const u = state.users.find(x => x.id === state.currentUser.id);
+            const banco = (u && u.datosBanco) ? u.datosBanco : "NO REGISTRADOS (Por favor, solicítalos al socio)";
+            const nombre = (u && u.nombre) ? u.nombre : state.currentUser.email;
+
+            const msg = encodeURIComponent(`Hola Administrador, solicito el retiro de mis ganancias disponibles (${monto}) reflejadas en mi panel de ZonaTecno.\n\n👤 Socio: ${nombre}\n✉️ Correo: ${state.currentUser.email}\n\n🏦 MIS DATOS BANCARIOS:\n${banco}`);
+            window.open(`https://wa.me/${state.config.adminWa}?text=${msg}`, '_blank');
+        }
+
+        function guardarBancoSocio() {
+            const u = state.users.find(x => x.id === state.currentUser.id);
+            if(u) {
+                u.datosBanco = document.getElementById('socioBancoInput').value;
+                saveDb();
+                showToast("Datos bancarios guardados correctamente.");
+            }
+        }
+
+                       // ================= CARGA DIRECTA A CLOUDINARY (UNIVERSAL) =================
+        window.subirImagenSistema = async (fileInput, inputOcultoId, statusId) => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const statusText = document.getElementById(statusId);
+            const hiddenInput = document.getElementById(inputOcultoId);
+            
+            statusText.innerHTML = '⏳ Subiendo...';
+            statusText.classList.remove('hidden');
+            statusText.style.color = '#3b82f6';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'RIFASECONOMICASMX');
+
+            try {
+                const response = await fetch(`https://api.cloudinary.com/v1_1/duxcsjc4z/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (data.secure_url) {
+                    hiddenInput.value = data.secure_url;
+                    statusText.innerHTML = '✅ Lista!';
+                    statusText.style.color = '#10b981';
+                    showToast("Imagen cargada con éxito");
+                } else {
+                    throw new Error('Error al subir');
+                }
+            } catch (error) {
+                statusText.innerHTML = '❌ Error';
+                statusText.style.color = '#ef4444';
+                fileInput.value = '';
+            }
+        };
+
+
+    </script>
+</body>
+</html>
