@@ -284,7 +284,8 @@
                         <div id="adminTabDemos" class="admin-tab hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
                     <h2 class="text-xl font-bold text-slate-800 mb-4">Subir Link de Demostración para Socios</h2>
-                    <form onsubmit="guardarDemoAdmin(event)" class="space-y-4">
+                                       <form onsubmit="guardarDemoAdmin(event)" class="space-y-4">
+                        <input type="hidden" id="editDemoId">
                         <input type="text" id="demoTitulo" placeholder="Título (Ej: Demo Invitación Boda)" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
                         <input type="url" id="demoEnlace" placeholder="URL del demo" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
                                                                         <div class="flex flex-col gap-2">
@@ -295,8 +296,9 @@
                         </div>
 
 
-                        <button type="submit" class="w-full bg-blue-600 text-white font-bold p-3 rounded-xl hover:bg-blue-700 transition shadow">Agregar Demo</button>
+                        <button type="submit" id="btnGuardarDemo" class="w-full bg-blue-600 text-white font-bold p-3 rounded-xl hover:bg-blue-700 transition shadow">Agregar Demo</button>
                     </form>
+
                     <div class="mt-6">
                         <h3 class="font-bold text-slate-700 mb-4">Demos Activos</h3>
                         <div id="listaDemosAdmin" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
@@ -315,6 +317,8 @@
                     <h2 class="text-xl font-bold text-slate-800 mb-4">Herramientas de Publicidad para Socios</h2>
                     <p class="text-sm text-slate-500 mb-6">Sube imágenes promocionales para que los socios las descarguen y usen en sus redes sociales.</p>
                                        <form onsubmit="guardarPublicidadAdmin(event)" class="space-y-4 mb-6 border-b border-slate-200 pb-6">
+                                                                   <input type="hidden" id="editPubliId">
+
                         <input type="text" id="publiTitulo" placeholder="Título de la imagen (Ej: Promo Invitaciones)" required class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500">
                         
                         <div class="flex flex-col gap-2">
@@ -718,6 +722,16 @@
         </div>
     </div>
 
+    <div id="customAlertModal" class="hidden fixed inset-0 modal-overlay flex items-center justify-center z-[100] p-4 transition-opacity">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl w-full max-w-sm text-center relative">
+            <div class="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-blue-100">
+                <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <h2 class="text-xl font-black text-slate-800 mb-2">Aviso del Sistema</h2>
+            <p id="customAlertText" class="text-slate-500 font-medium mb-6 text-sm leading-relaxed"></p>
+            <button onclick="document.getElementById('customAlertModal').classList.add('hidden')" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 transition shadow-lg">Entendido</button>
+        </div>
+    </div>
 
     <div id="globalToast" class="fixed bottom-5 right-5 bg-slate-800 text-white px-6 py-3 rounded-xl shadow-2xl hidden transition-opacity z-50 flex items-center gap-3">
         <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -766,13 +780,14 @@
                 if (saved || state.currentUser) {
                     if(state.currentUser) {
 
-                        const localUser = state.users.find(u => u.id === state.currentUser.id || u.email === state.currentUser.email);
-                        if(localUser && localUser.activo === false) {
+                                                const localUser = state.users.find(u => u.id === state.currentUser.id || u.email === state.currentUser.email);
+                        if(localUser && (localUser.activo === false || localUser.eliminado)) {
                             state.currentUser = null;
                             saveDb();
                             mostrarVista('landingView');
                             return;
                         }
+
                         let rolStr = state.currentUser.role === 'admin' ? 'ADMINISTRADOR' : 'SOCIO';
                         let nombreCorto = state.currentUser.email.split('@')[0];
                         if (document.getElementById('loadRoleText')) document.getElementById('loadRoleText').innerText = rolStr;
@@ -828,6 +843,10 @@
             toast.classList.remove('hidden');
             setTimeout(() => toast.classList.add('hidden'), 3500);
         }
+        function mostrarAlerta(mensaje) {
+            document.getElementById('customAlertText').innerText = mensaje;
+            document.getElementById('customAlertModal').classList.remove('hidden');
+        }
 
         function generateId() { return Math.random().toString(36).substr(2, 9); }
         
@@ -849,39 +868,68 @@
 
         // ================= AUTH =================
       
-        async function handleLogin() {
+                       async function handleLogin() {
             const email = document.getElementById('emailInput').value.trim();
             const pass = document.getElementById('passInput').value;
-            if(!email || !pass) return alert("Ingrese credenciales");
+            if(!email || !pass) return mostrarAlerta("Por favor, ingrese sus credenciales completas.");
             
             const btn = document.getElementById('btnLogin');
             btn.innerHTML = "Validando..."; btn.disabled = true;
 
-            // Lógica Híbrida: Intenta usar Firebase si está vivo, sino usa Local Fallback para garantizar funcionamiento.
-            let userRole = 'socio';
-            if (email === 'zonatecno@admin.com') userRole = 'admin';
-            
-                       // Check in local state first for generated socios
+            const resetBtn = () => { btn.innerHTML = "Ingresar"; btn.disabled = false; };
+
             const localUser = state.users.find(u => u.email === email);
-            if(localUser) {
-                if(localUser.activo === false) {
-                    btn.innerHTML = "Ingresar"; btn.disabled = false;
-                    return alert("Tu cuenta ha sido bloqueada. Contacta al administrador.");
-                }
-                userRole = localUser.role;
+            
+            if (email !== 'zonatecno@admin.com' && !localUser) {
+                mostrarAlerta("El correo electrónico no está registrado.");
+                resetBtn();
+                return;
             }
+
+            if (localUser && localUser.eliminado) {
+                mostrarAlerta("La cuenta ha sido eliminada por el administrador.");
+                resetBtn();
+                return;
+            }
+
+            if (localUser && localUser.activo === false) {
+                mostrarAlerta("La cuenta ha sido bloqueada. Contacte a soporte.");
+                resetBtn();
+                return;
+            }
+
+            let userRole = localUser ? localUser.role : 'admin';
 
             try {
-
-                if(window.signInWithEmailAndPassword && window.fbAuth) {
-                    await window.signInWithEmailAndPassword(window.fbAuth, email, pass);
+                if (email === 'zonatecno@admin.com' || userRole === 'admin') {
+                    if (window.signInWithEmailAndPassword && window.fbAuth) {
+                        await window.signInWithEmailAndPassword(window.fbAuth, email, pass);
+                    } else if (localUser && localUser.pass !== pass) {
+                        mostrarAlerta("La contraseña es incorrecta.");
+                        resetBtn();
+                        return;
+                    }
+                } else {
+                    if (localUser.pass !== pass) {
+                        mostrarAlerta("La contraseña es incorrecta.");
+                        resetBtn();
+                        return;
+                    }
                 }
             } catch (e) {
-                console.warn("Firebase Auth falló, procediendo con modo Local/Demo", e);
+                if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential' || e.message.includes('wrong-password')) {
+                    mostrarAlerta("La contraseña es incorrecta.");
+                } else if (e.code === 'auth/user-not-found') {
+                    mostrarAlerta("El correo electrónico no está registrado.");
+                } else {
+                    mostrarAlerta("Error de autenticación: " + e.message);
+                }
+                resetBtn();
+                return;
             }
 
-                                              state.currentUser = { email, role: userRole, id: localUser ? localUser.id : email };
-                        saveDb();
+            state.currentUser = { email, role: userRole, id: localUser ? localUser.id : email };
+            saveDb();
 
             btn.innerHTML = "Iniciando..."; btn.disabled = true;
             mostrarVista('loadingView');
@@ -902,6 +950,7 @@
             }, 1500);
 
         }
+
 
                        function logout() {
             state.currentUser = null;
@@ -975,7 +1024,8 @@
                        // Render Socios List Detallado
 
             const lsSocios = document.getElementById('listadoSocios');
-            const arrSocios = state.users.filter(u => u.role === 'socio');
+                       const arrSocios = state.users.filter(u => u.role === 'socio' && !u.eliminado);
+
             lsSocios.innerHTML = '';
                        if(arrSocios.length > 0) {
                 arrSocios.forEach(u => {
@@ -1026,7 +1076,8 @@
             const lsComisiones = document.getElementById('listadoComisionesAdmin');
             if (lsComisiones) {
                 lsComisiones.innerHTML = '';
-                const arrSociosCom = state.users.filter(u => u.role === 'socio');
+                                const arrSociosCom = state.users.filter(u => u.role === 'socio' && !u.eliminado);
+
                 if(arrSociosCom.length > 0) {
                     arrSociosCom.forEach(u => {
                         const misVentasSocio = state.sales.filter(s => s.socioId === u.id);
@@ -1293,9 +1344,13 @@
                         <div class="border border-slate-200 rounded-xl overflow-hidden flex flex-col">
                             <img src="${d.imagen}" class="w-full h-24 object-cover">
                             <div class="p-3">
-                                <h4 class="font-bold text-sm text-slate-800 truncate">${d.titulo}</h4>
+                                                               <h4 class="font-bold text-sm text-slate-800 truncate">${d.titulo}</h4>
                                 <a href="${d.enlace}" target="_blank" class="text-xs text-blue-500 truncate block mb-2">${d.enlace}</a>
-                                <button onclick="eliminarDemo('${d.id}')" class="w-full text-xs bg-rose-50 text-rose-600 py-1 rounded hover:bg-rose-100">Eliminar</button>
+                                <div class="flex gap-2">
+                                    <button onclick="editarDemo('${d.id}')" class="w-full text-xs bg-amber-50 text-amber-600 py-1.5 rounded hover:bg-amber-100 font-bold transition">Editar</button>
+                                    <button onclick="eliminarDemo('${d.id}')" class="w-full text-xs bg-rose-50 text-rose-600 py-1.5 rounded hover:bg-rose-100 font-bold transition">Eliminar</button>
+                                </div>
+
                             </div>
                         </div>
                     `;
@@ -1341,10 +1396,14 @@
                     contAdminPubli.innerHTML += `
                         <div class="border border-slate-200 rounded-xl overflow-hidden flex flex-col shadow-sm">
                             <img src="${p.url}" class="w-full h-32 object-cover bg-slate-100">
-                            <div class="p-3 bg-slate-50">
+                                                       <div class="p-3 bg-slate-50">
                                 <h4 class="font-bold text-sm text-slate-800 truncate mb-2">${p.titulo}</h4>
-                                <button onclick="eliminarPublicidadAdmin('${p.id}')" class="w-full text-xs bg-rose-100 text-rose-700 py-1.5 rounded font-bold hover:bg-rose-200 transition shadow-sm">Eliminar Imagen</button>
+                                <div class="flex gap-2">
+                                    <button onclick="editarPublicidadAdmin('${p.id}')" class="w-full text-xs bg-amber-100 text-amber-700 py-1.5 rounded font-bold hover:bg-amber-200 transition shadow-sm">Editar</button>
+                                    <button onclick="eliminarPublicidadAdmin('${p.id}')" class="w-full text-xs bg-rose-100 text-rose-700 py-1.5 rounded font-bold hover:bg-rose-200 transition shadow-sm">Eliminar</button>
+                                </div>
                             </div>
+
                         </div>
                     `;
                 });
@@ -1496,20 +1555,43 @@
                 saveDb(); renderAdmin(); showToast("Cliente renovado. Comisión liberada.");
             }
         }
-        function guardarDemoAdmin(e) {
+               function guardarDemoAdmin(e) {
             e.preventDefault();
             if(!state.demos) state.demos = [];
-            state.demos.push({
-                id: generateId(),
-                titulo: document.getElementById('demoTitulo').value,
-                enlace: document.getElementById('demoEnlace').value,
-                imagen: document.getElementById('demoImagen').value || 'https://via.placeholder.com/150?text=Demo'
-            });
-            saveDb(); renderAdmin(); showToast("Demo agregado exitosamente.");
+            const idEdit = document.getElementById('editDemoId').value;
+            const titulo = document.getElementById('demoTitulo').value;
+            const enlace = document.getElementById('demoEnlace').value;
+            const imagen = document.getElementById('demoImagen').value || 'https://via.placeholder.com/150?text=Demo';
+
+            if (idEdit) {
+                const d = state.demos.find(x => x.id === idEdit);
+                if (d) { d.titulo = titulo; d.enlace = enlace; d.imagen = imagen; }
+                showToast("Demo actualizado exitosamente.");
+            } else {
+                state.demos.push({ id: generateId(), titulo, enlace, imagen });
+                showToast("Demo agregado exitosamente.");
+            }
+            
+            saveDb(); renderAdmin();
             document.getElementById('demoTitulo').value = '';
             document.getElementById('demoEnlace').value = '';
             document.getElementById('demoImagen').value = '';
+            document.getElementById('editDemoId').value = '';
+            document.getElementById('btnGuardarDemo').innerText = "Agregar Demo";
         }
+
+        function editarDemo(id) {
+            const d = state.demos.find(x => x.id === id);
+            if (d) {
+                document.getElementById('demoTitulo').value = d.titulo;
+                document.getElementById('demoEnlace').value = d.enlace;
+                document.getElementById('demoImagen').value = d.imagen;
+                document.getElementById('editDemoId').value = d.id;
+                document.getElementById('btnGuardarDemo').innerText = "Actualizar Demo";
+                window.scrollTo(0, 0);
+            }
+        }
+
 
         function eliminarDemo(id) {
             state.demos = state.demos.filter(d => d.id !== id);
@@ -1554,18 +1636,40 @@
             }
         };
 
-                function guardarPublicidadAdmin(e) {
+                      function guardarPublicidadAdmin(e) {
             e.preventDefault();
             if(!state.galeriaPublicidad) state.galeriaPublicidad = [];
-            state.galeriaPublicidad.push({
-                id: generateId(),
-                titulo: document.getElementById('publiTitulo').value,
-                url: document.getElementById('publiImagen').value
-            });
-            saveDb(); renderAdmin(); showToast("Imagen publicitaria agregada.");
+            const idEdit = document.getElementById('editPubliId').value;
+            const titulo = document.getElementById('publiTitulo').value;
+            const url = document.getElementById('publiImagen').value;
+
+            if (idEdit) {
+                const p = state.galeriaPublicidad.find(x => x.id === idEdit);
+                if (p) { p.titulo = titulo; p.url = url; }
+                showToast("Imagen publicitaria actualizada.");
+            } else {
+                state.galeriaPublicidad.push({ id: generateId(), titulo, url });
+                showToast("Imagen publicitaria agregada.");
+            }
+            
+            saveDb(); renderAdmin();
             document.getElementById('publiTitulo').value = '';
             document.getElementById('publiImagen').value = '';
+            document.getElementById('editPubliId').value = '';
+            document.getElementById('btnGuardarPubli').innerText = "Agregar a Galería";
         }
+
+        function editarPublicidadAdmin(id) {
+            const p = state.galeriaPublicidad.find(x => x.id === id);
+            if (p) {
+                document.getElementById('publiTitulo').value = p.titulo;
+                document.getElementById('publiImagen').value = p.url;
+                document.getElementById('editPubliId').value = p.id;
+                document.getElementById('btnGuardarPubli').innerText = "Actualizar Imagen";
+                window.scrollTo(0, 0);
+            }
+        }
+
 
         function eliminarPublicidadAdmin(id) {
             if(!confirm("¿Eliminar esta imagen publicitaria de las cuentas de los socios?")) return;
@@ -1639,11 +1743,16 @@
         }
 
 
-           function eliminarSocio(idSocio) {
+                      function eliminarSocio(idSocio) {
             if(!confirm("⚠️ ¿Estás seguro de ELIMINAR a este socio por completo? Perderá acceso inmediato y sus registros de ventas pendientes quedarán suspendidos.")) return;
-            state.users = state.users.filter(u => u.id !== idSocio);
+            const u = state.users.find(x => x.id === idSocio);
+            if(u) {
+                u.eliminado = true;
+                u.activo = false;
+            }
             saveDb(); renderAdmin(); showToast("Socio eliminado permanentemente del sistema.");
         }
+
 
         function bloquearSocio(idSocio) {
             const u = state.users.find(x => x.id === idSocio);
@@ -2130,5 +2239,4 @@
 
     </script>
 </body>
-</html>
-
+                            </html>
